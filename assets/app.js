@@ -297,7 +297,10 @@
       document.getElementById('cldp1').value = existing.cldp1 || 'Unenrolled';
       document.getElementById('cldp2').value = existing.cldp2 || 'Unenrolled';
       document.getElementById('cldp3').value = existing.cldp3 || 'Unenrolled';
-      setSelectValue(document.getElementById('moduleLesson'), existing.moduleLesson);
+      var existingModuleVal = (existing.module && existing.moduleLesson)
+        ? (existing.module + '|' + existing.moduleLesson)
+        : (existing.moduleLesson || existing.module || '');
+      setSelectValue(document.getElementById('moduleLesson'), existingModuleVal);
       document.getElementById('potentialMentor').value = existing.potentialMentor || 'No';
       document.getElementById('c2s101').value = existing.c2s101 || 'Lesson 1';
       document.getElementById('otherTrainings').value = existing.otherTrainings || '';
@@ -314,15 +317,10 @@
       if (!name) { flash('Mentee name is required.', 'danger'); document.getElementById('name').focus(); return; }
       if (contact && !/^09\d{9}$/.test(contact)) { flash('Contact number must be exactly 11 digits starting with 09.', 'danger'); document.getElementById('contact').focus(); return; }
 
-      var moduleLesson = document.getElementById('moduleLesson').value;
-      var moduleLabel = '';
-      var options = document.getElementById('moduleLesson').options;
-      for (var i = 0; i < options.length; i++) {
-        if (options[i].value === moduleLesson) {
-          if (options[i].parentElement && options[i].parentElement.label) moduleLabel = options[i].parentElement.label;
-          break;
-        }
-      }
+      var moduleLessonVal = document.getElementById('moduleLesson').value;
+      var moduleParts = moduleLessonVal.split('|');
+      var moduleLesson = moduleParts[1] || moduleLessonVal;
+      var moduleLabel = moduleParts[0] || '';
 
       var data = {
         name: name,
@@ -389,7 +387,11 @@
     }
 
     var age = computeAge(m.birthday);
-    var moduleLabel = m.module || m.moduleLesson || '—';
+    var moduleLabel = '';
+    if (m.module && m.moduleLesson) moduleLabel = m.module + ' - ' + m.moduleLesson;
+    else if (m.moduleLesson) moduleLabel = m.moduleLesson;
+    else if (m.module) moduleLabel = m.module;
+    else moduleLabel = '—';
 
     document.getElementById('avatar').textContent = initials(m.name);
     nameEl.textContent = m.name || 'Untitled';
