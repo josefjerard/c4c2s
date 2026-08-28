@@ -203,7 +203,6 @@
         '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
         '<td style="max-width:260px;">' + esc(m.remarks || '—') + '</td>' +
         '<td><div class="row-actions">' +
-        '<a href="view.html?id=' + encodeURIComponent(m.id) + '" class="btn btn-outline btn-sm">View</a>' +
         '<a href="edit.html?id=' + encodeURIComponent(m.id) + '" class="btn btn-outline btn-sm">Edit</a>' +
         '<button type="button" class="btn btn-danger-outline btn-sm" data-delete="' + encodeURIComponent(m.id) + '">Delete</button>' +
         '</div></td></tr>';
