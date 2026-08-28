@@ -817,6 +817,18 @@ td .mentee-sub {
 }
 
 /* Responsive */
+
+/* Tablets & small screens */
+@media (max-width: 900px) {
+  .container {
+    padding: 24px 16px 56px;
+  }
+  .topbar-inner {
+    padding: 0 16px;
+  }
+}
+
+/* Phones */
 @media (max-width: 700px) {
   .form-grid, .info-grid {
     grid-template-columns: 1fr;
@@ -825,13 +837,150 @@ td .mentee-sub {
     flex-direction: column;
     align-items: stretch;
   }
+  .toolbar-left,
+  .toolbar-right {
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
+  }
   .search-box {
     min-width: 0;
+    flex: 1 1 100%;
   }
   .table-wrap {
     overflow-x: auto;
   }
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .hero h1 {
+    font-size: 1.35rem;
+  }
+  .container {
+    padding: 20px 14px 48px;
+  }
   .topbar-inner {
-    padding: 0 16px;
+    padding: 0 12px;
+    height: 56px;
+    gap: 8px;
+  }
+  .brand {
+    font-size: 1rem;
+    gap: 8px;
+  }
+  .brand span:last-child {
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .topbar-nav {
+    gap: 4px;
+  }
+  .topbar-nav a {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
+  .topbar-user {
+    display: none;
+  }
+  .search-box {
+    padding: 10px 12px;
+  }
+  input, select, textarea {
+    font-size: 16px;
+  }
+  .btn {
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    width: 100%;
+  }
+  .btn-sm {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    width: auto;
+  }
+  .form-card {
+    padding: 20px;
+  }
+  .settings-card {
+    padding: 20px;
+  }
+  .form-actions {
+    flex-direction: column;
+  }
+  .form-actions .btn {
+    width: 100%;
+  }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .page-header .btn {
+    width: auto;
+  }
+  .page-header > div:last-child {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+  }
+  .page-header > div:last-child .btn {
+    flex: 1;
+    width: auto;
+  }
+  .detail-head,
+  .detail-body {
+    padding: 18px;
+  }
+  .detail-title {
+    flex-wrap: wrap;
+  }
+  .detail-avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 1.2rem;
+  }
+  .admin-mentor {
+    flex-wrap: wrap;
+    padding: 14px 16px !important;
+    gap: 10px !important;
+  }
+  .admin-mentor > div {
+    min-width: 100% !important;
+    flex: none !important;
+  }
+  .admin-caret {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+  }
+  .admin-group {
+    position: relative;
+  }
+  thead th,
+  tbody td {
+    padding: 12px 12px;
+  }
+  thead th {
+    font-size: 0.7rem;
+  }
+  .stat-card {
+    padding: 14px;
+  }
+  .stat-value {
+    font-size: 1.4rem;
+  }
+}
+
+/* Very narrow phones */
+@media (max-width: 380px) {
+  .brand {
+    font-size: 0.9rem;
+  }
+  .topbar-nav a {
+    padding: 6px 6px;
+    font-size: 0.8rem;
   }
 }
