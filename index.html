@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - C2S Mentee Management</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-logo">C2</span>
+        <span>C2S Mentee Management</span>
+      </a>
+      <div class="topbar-actions">
+        <nav class="topbar-nav">
+          <a href="settings.html">Settings</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="flashMessage"></div>
+
+    <div class="hero">
+      <h1>Mentee Dashboard</h1>
+      <p>Manage your mentees, track training progress, and keep contact details up to date.</p>
+    </div>
+
+    <section class="stats" id="statsRow"></section>
+
+    <div class="toolbar">
+      <div class="toolbar-right">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="searchInput" placeholder="Search mentees by name or contact...">
+        </div>
+        <select id="statusFilter" class="select-inline">
+          <option value="">All statuses</option>
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+          <option value="Transferred to Other Ministry">Transferred to Other Ministry</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-wrap" id="tableContainer"></div>
+  </main>
+
+  <footer class="footer">C2S Mentee Management System &middot; Frontend Prototype</footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
