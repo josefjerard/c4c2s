@@ -203,7 +203,7 @@
         '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
         '<td style="max-width:260px;">' + esc(m.remarks || '—') + '</td>' +
         '<td><div class="row-actions">' +
-        '<a href="view.html?id=' + encodeURIComponent(m.id) + '" class="btn btn-outline btn-sm">View</a>' +
+        '<a href="view.html?id=' + encodeURIComponent(m.id) + '" class="btn btn-primary btn-sm">View</a>' +
         '</div></td></tr>';
     }).join('');
 
