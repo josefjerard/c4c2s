@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - C2S Mentee Management</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-logo">C2</span>
+        <span>C2S Mentee Management</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="flashMessage"></div>
+
+    <div class="auth-wrap">
+      <form class="form-card auth-card" id="loginForm" novalidate>
+        <h2>Welcome Back</h2>
+        <p class="subtitle">Sign in to manage mentees.</p>
+
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" name="loginEmail" placeholder="you@example.com" autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" name="loginPassword" placeholder="Your password" autocomplete="current-password">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        </div>
+
+        <p class="auth-switch">Don't have an account? <a href="register.html">Register here</a></p>
+      </form>
+    </div>
+  </main>
+
+  <footer class="footer">C2S Mentee Management System &middot; Login</footer>
+
+  <script>window.AUTH_PAGE = 'login';</script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - C2S Mentee Management</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-logo">C2</span>
+        <span>C2S Mentee Management</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="flashMessage"></div>
+
+    <div class="auth-wrap">
+      <form class="form-card auth-card" id="registerForm" novalidate>
+        <h2>Create Mentor Account</h2>
+        <p class="subtitle">Register to access the mentee dashboard.</p>
+
+        <div class="form-group">
+          <label for="regName">Full Name <span class="req">*</span></label>
+          <input type="text" id="regName" name="regName" placeholder="Your full name" autocomplete="name">
+        </div>
+
+        <div class="form-group">
+          <label for="regEmail">Email <span class="req">*</span></label>
+          <input type="email" id="regEmail" name="regEmail" placeholder="you@example.com" autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label for="regPassword">Password <span class="req">*</span></label>
+          <input type="password" id="regPassword" name="regPassword" placeholder="Minimum 8 characters" autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+          <label for="regConfirm">Confirm Password <span class="req">*</span></label>
+          <input type="password" id="regConfirm" name="regConfirm" placeholder="Re-enter your password" autocomplete="new-password">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        </div>
+
+        <p class="auth-switch">Already have an account? <a href="login.html">Sign in here</a></p>
+      </form>
+    </div>
+  </main>
+
+  <footer class="footer">C2S Mentee Management System &middot; Registration</footer>
+
+  <script>window.AUTH_PAGE = 'register';</script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

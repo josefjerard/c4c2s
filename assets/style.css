@@ -773,6 +773,41 @@ td .mentee-sub {
   transform: translateX(20px);
 }
 
+/* Auth pages */
+.auth-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.auth-card {
+  max-width: 420px;
+  width: 100%;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.auth-switch {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.auth-switch a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.topbar-user {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0 4px;
+}
+
 /* Footer */
 .footer {
   text-align: center;

@@ -1,71 +1,98 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'c2s_mentees';
   var THEME_KEY = 'c2s_theme';
+  var SESSION_KEY = 'c2s_session';
+  var GAS_URL = 'https://script.google.com/macros/s/AKfycbyHfHdMDs0WpojC5aHdGYh_kytU8f7bbIfjsrTmzqg9F1xjI1R1d2ZNcV744S-MfPJb/exec';
 
-  /* ---------- Data layer (localStorage) ---------- */
+  /* ---------- In-memory cache ---------- */
 
-  var SAMPLE_MENTEES = [
-    { name: 'Ana Reyes', status: 'Active', contact: '09171234501', birthday: '2004-05-12', address: '123 Mabini St., Brgy. San Antonio, Manila', cldp1: 'Completed', cldp2: 'Ongoing', cldp3: 'Unenrolled', moduleLesson: 'Lesson 1', module: 'Module 1', potentialMentor: 'Yes', c2s101: 'Lesson 2', otherTrainings: 'ASP, Worship Team', remarks: 'Very engaged in group activities and always on time.' },
-    { name: 'Carlos Mendoza', status: 'Active', contact: '09171234502', birthday: '2003-09-03', address: '456 Luna Ave., Brgy. Katipunan, Quezon City', cldp1: 'Ongoing', cldp2: 'Unenrolled', cldp3: 'Unenrolled', moduleLesson: 'Lesson 3', module: 'Module 2', potentialMentor: 'No', c2s101: 'Lesson 1', otherTrainings: 'Revamp', remarks: 'Shows potential, just started CLDP 1 recently.' },
-    { name: 'Bianca Santos', status: 'Inactive', contact: '09171234503', birthday: '2005-01-27', address: '789 Rizal Rd., Brgy. Sta. Cruz, Manila', cldp1: 'Incomplete', cldp2: 'Unenrolled', cldp3: 'Unenrolled', moduleLesson: 'Lesson 2', module: 'Module 1', potentialMentor: 'No', c2s101: 'Lesson 4', otherTrainings: 'First Aid Training', remarks: 'On a break, planning to return next quarter.' },
-    { name: 'Daniel Cruz', status: 'Transferred to Other Ministry', contact: '09171234504', birthday: '2002-11-19', address: '321 Bonifacio St., Brgy. Maybunga, Pasig', cldp1: 'Completed', cldp2: 'Completed', cldp3: 'Ongoing', moduleLesson: 'Lesson 5', module: 'Module 3', potentialMentor: 'Yes', c2s101: 'Completed', otherTrainings: 'Worship Team, Revamp', remarks: 'Transferred to the Youth Ministry department.' },
-    { name: 'Elena Torres', status: 'Active', contact: '09171234505', birthday: '2004-03-08', address: '654 Aguinaldo Ave., Brgy. Poblacion, Makati', cldp1: 'Unenrolled', cldp2: 'Unenrolled', cldp3: 'Unenrolled', moduleLesson: 'Lesson 1', module: 'Module 1', potentialMentor: 'No', c2s101: 'Lesson 1', otherTrainings: 'None yet', remarks: 'New mentee, just enrolled this quarter.' },
-    { name: 'Miguel Aquino', status: 'Active', contact: '09171234506', birthday: '2001-07-22', address: '987 Katipunan Ave., Brgy. Loyola, Quezon City', cldp1: 'Completed', cldp2: 'Completed', cldp3: 'Completed', moduleLesson: 'Lesson 6', module: 'Module 4', potentialMentor: 'Yes', c2s101: 'Completed', otherTrainings: 'ASP, Revamp, Leadership Training', remarks: 'Graduated all CLDP levels, ready to become a mentor.' },
-    { name: 'Sofia Ramos', status: 'Active', contact: '09171234507', birthday: '2005-12-01', address: '135 P. Burgos St., Brgy. Sampaloc, Manila', cldp1: 'Ongoing', cldp2: 'Unenrolled', cldp3: 'Unenrolled', moduleLesson: 'Lesson 4', module: 'Module 2', potentialMentor: 'No', c2s101: 'Lesson 3', otherTrainings: 'Creative Arts Team', remarks: 'Very creative, leads the arts subgroup.' },
-    { name: 'Luke Navarro', status: 'Inactive', contact: '09171234508', birthday: '2004-02-14', address: '246 Espana Blvd., Brgy. Dapitan, Manila', cldp1: 'Unenrolled', cldp2: 'Unenrolled', cldp3: 'Unenrolled', moduleLesson: 'Lesson 1', module: 'Module 1', potentialMentor: 'No', c2s101: 'Lesson 1', otherTrainings: 'Sports Ministry', remarks: 'Recently inactive due to school schedule.' }
-  ];
+  var _mentees = [];
+  var _mentors = [];
 
-  var MENTOR_SLOTS = ['jdoe', 'ssmith', 'mgarcia'];
+  /* ---------- Data layer (Google Sheets via Apps Script) ---------- */
 
-  function seedMentees() {
-    var seeded = SAMPLE_MENTEES.map(function (m, i) {
-      return Object.assign({}, m, {
-        id: 'sample' + (i + 1),
-        createdAt: new Date().toISOString(),
-        mentor: MENTOR_SLOTS[i % MENTOR_SLOTS.length]
+  function apiGet(action, params) {
+    var url = GAS_URL + '?action=' + encodeURIComponent(action) + '&_t=' + Date.now();
+    if (params) {
+      Object.keys(params).forEach(function (k) {
+        url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
       });
+    }
+    return fetch(url)
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res.success) throw new Error(res.error || 'API error');
+        return res.data;
+      });
+  }
+
+  function apiPost(action, body) {
+    return fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(Object.assign({ action: action }, body))
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res.success) throw new Error(res.error || 'API error');
+        return res.data;
+      });
+  }
+
+  function fetchMentees() {
+    return apiGet('getMentees').then(function (data) {
+      _mentees = Array.isArray(data) ? data : [];
+      return _mentees;
+    }).catch(function () {
+      _mentees = [];
+      return _mentees;
     });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-    return seeded;
   }
 
-  function getMentees() {
-    var list;
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      list = raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      list = [];
-    }
-    if (!Array.isArray(list) || list.length === 0) {
-      return seedMentees().slice();
-    }
-    var redistributed = false;
-    if (list.some(function (m) { return m.mentor === 'admin'; })) {
-      list = list.map(function (m, i) {
-        if (m.mentor === 'admin') {
-          m = Object.assign({}, m, { mentor: MENTOR_SLOTS[i % MENTOR_SLOTS.length] });
-          redistributed = true;
-        }
-        return m;
-      });
-    }
-    if (redistributed) localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    return list;
+  function fetchMentors() {
+    return apiGet('getMentors').then(function (data) {
+      _mentors = Array.isArray(data) ? data : [];
+      return _mentors;
+    }).catch(function () {
+      _mentors = [];
+      return _mentors;
+    });
   }
 
-  function saveMentees(list) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-  }
+  function getMentees() { return _mentees; }
+  function getMentors() { return _mentors; }
 
   function getMenteeById(id) {
-    return getMentees().filter(function (m) { return m.id === id; })[0] || null;
+    return _mentees.filter(function (m) { return m.id === id; })[0] || null;
   }
 
-  function uid() {
-    return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  function addMentee(data) {
+    data.id = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    data.createdAt = new Date().toISOString();
+    return apiPost('addMentee', { data: data }).then(function (saved) {
+      _mentees.push(saved);
+      return saved;
+    });
+  }
+
+  function updateMentee(data) {
+    data.updatedAt = new Date().toISOString();
+    return apiPost('updateMentee', { data: data }).then(function (updated) {
+      if (updated) {
+        _mentees = _mentees.map(function (m) {
+          return m.id === updated.id ? updated : m;
+        });
+      }
+      return updated;
+    });
+  }
+
+  function deleteMentee(id) {
+    return apiPost('deleteMentee', { id: id }).then(function () {
+      _mentees = _mentees.filter(function (m) { return m.id !== id; });
+    });
   }
 
   /* ---------- Theming ---------- */
@@ -74,7 +101,7 @@
     var current = localStorage.getItem(THEME_KEY) || 'light';
     document.documentElement.setAttribute('data-theme', current);
     var icon = document.querySelector('.theme-icon');
-    if (icon) icon.textContent = current === 'dark' ? '☀️' : '🌙';
+    if (icon) icon.textContent = current === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19';
     var toggle = document.getElementById('darkModeToggle');
     if (toggle) toggle.checked = current === 'dark';
   }
@@ -136,11 +163,15 @@
   }
 
   function formatDate(iso) {
-    if (!iso) return '—';
+    if (!iso) return '\u2014';
     var d = new Date(iso + 'T00:00:00');
-    if (isNaN(d.getTime())) return '—';
+    if (isNaN(d.getTime())) return '\u2014';
     var opts = { year: 'numeric', month: 'short', day: 'numeric' };
     return d.toLocaleDateString(undefined, opts);
+  }
+
+  function showLoading(el) {
+    if (el) el.innerHTML = '<div class="empty-state"><p>Loading...</p></div>';
   }
 
   /* ---------- Dashboard (index.html) ---------- */
@@ -201,7 +232,7 @@
         '<td><div class="mentee-name">' + esc(m.name) + '</div><div class="mentee-sub">' + esc(m.contact || 'No contact') + '</div></td>' +
         '<td><span class="badge ' + statusBadgeClass(m.status) + '"><span class="badge-dot"></span>' + esc(m.status) + '</span></td>' +
         '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
-        '<td style="max-width:260px;">' + esc(m.remarks || '—') + '</td>' +
+        '<td style="max-width:260px;">' + esc(m.remarks || '\u2014') + '</td>' +
         '<td><div class="row-actions">' +
         '<a href="view.html?id=' + encodeURIComponent(m.id) + '" class="btn btn-primary btn-sm">View</a>' +
         '</div></td></tr>';
@@ -211,42 +242,19 @@
       '<table><thead><tr>' +
       '<th>Mentee</th><th>Status</th><th>Potential Mentor</th><th>Remarks</th><th style="text-align:right;">Actions</th>' +
       '</tr></thead><tbody>' + rows + '</tbody></table>';
-
-    container.querySelectorAll('[data-delete]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var id = decodeURIComponent(btn.getAttribute('data-delete'));
-        handleDelete(id);
-      });
-    });
   }
 
   function handleDelete(id) {
     var m = getMenteeById(id);
     if (!m) return;
     if (!confirm('Are you sure you want to delete "' + (m.name || 'this mentee') + '"? This cannot be undone.')) return;
-    var list = getMentees().filter(function (x) { return x.id !== id; });
-    saveMentees(list);
-    flash('Mentee deleted successfully.', 'success');
-    renderStats();
-    renderTable();
-  }
-
-  /* ---------- Mentor data ---------- */
-
-  var SAMPLE_MENTORS = [
-    { username: 'admin', name: 'Administrator', email: 'admin@c2s.local', password: 'admin12345' },
-    { username: 'jdoe', name: 'John Doe', email: 'john.doe@example.com', password: 'password1' },
-    { username: 'ssmith', name: 'Sarah Smith', email: 'sarah.smith@example.com', password: 'password2' },
-    { username: 'mgarcia', name: 'Maria Garcia', email: 'maria.garcia@example.com', password: 'password3' }
-  ];
-
-  function getMentors() {
-    try {
-      var raw = localStorage.getItem('c2s_mentors');
-      if (raw) return JSON.parse(raw);
-    } catch (e) {}
-    localStorage.setItem('c2s_mentors', JSON.stringify(SAMPLE_MENTORS));
-    return SAMPLE_MENTORS.slice();
+    deleteMentee(id).then(function () {
+      flash('Mentee deleted successfully.', 'success');
+      renderStats();
+      renderTable();
+    }).catch(function (err) {
+      flash('Failed to delete: ' + err.message, 'danger');
+    });
   }
 
   /* ---------- Create / Edit form ---------- */
@@ -281,30 +289,33 @@
         return;
       }
       editId = urlId;
-      var existing = getMenteeById(editId);
-      if (!existing) {
-        flash('Mentee not found.', 'danger');
-        document.getElementById('editTitle').textContent = 'Mentee not found';
-        return;
-      }
-      document.getElementById('name').value = existing.name || '';
-      document.getElementById('status').value = existing.status || 'Active';
-      document.getElementById('contact').value = existing.contact || '';
-      document.getElementById('birthday').value = existing.birthday || '';
-      document.getElementById('address').value = existing.address || '';
-      document.getElementById('cldp1').value = existing.cldp1 || 'Unenrolled';
-      document.getElementById('cldp2').value = existing.cldp2 || 'Unenrolled';
-      document.getElementById('cldp3').value = existing.cldp3 || 'Unenrolled';
-      var existingModuleVal = (existing.module && existing.moduleLesson)
-        ? (existing.module + '|' + existing.moduleLesson)
-        : (existing.moduleLesson || existing.module || '');
-      setSelectValue(document.getElementById('moduleLesson'), existingModuleVal);
-      document.getElementById('potentialMentor').value = existing.potentialMentor || 'No';
-      document.getElementById('c2s101').value = existing.c2s101 || 'Lesson 1';
-      document.getElementById('otherTrainings').value = existing.otherTrainings || '';
-      document.getElementById('remarks').value = existing.remarks || '';
-      updateAge();
-      document.title = 'Edit Mentee - C2S Mentee Management';
+
+      fetchMentees().then(function () {
+        var existing = getMenteeById(editId);
+        if (!existing) {
+          flash('Mentee not found.', 'danger');
+          document.getElementById('editTitle').textContent = 'Mentee not found';
+          return;
+        }
+        document.getElementById('name').value = existing.name || '';
+        document.getElementById('status').value = existing.status || 'Active';
+        document.getElementById('contact').value = existing.contact || '';
+        document.getElementById('birthday').value = existing.birthday || '';
+        document.getElementById('address').value = existing.address || '';
+        document.getElementById('cldp1').value = existing.cldp1 || 'Unenrolled';
+        document.getElementById('cldp2').value = existing.cldp2 || 'Unenrolled';
+        document.getElementById('cldp3').value = existing.cldp3 || 'Unenrolled';
+        var existingModuleVal = (existing.module && existing.moduleLesson)
+          ? (existing.module + '|' + existing.moduleLesson)
+          : (existing.moduleLesson || existing.module || '');
+        setSelectValue(document.getElementById('moduleLesson'), existingModuleVal);
+        document.getElementById('potentialMentor').value = existing.potentialMentor || 'No';
+        document.getElementById('c2s101').value = existing.c2s101 || 'Lesson 1';
+        document.getElementById('otherTrainings').value = existing.otherTrainings || '';
+        document.getElementById('remarks').value = existing.remarks || '';
+        updateAge();
+        document.title = 'Edit Mentee - C2S Mentee Management';
+      });
     }
 
     form.addEventListener('submit', function (e) {
@@ -337,23 +348,23 @@
         remarks: document.getElementById('remarks').value.trim()
       };
 
-      var list = getMentees();
       if (editId) {
-        list = list.map(function (m) {
-          if (m.id === editId) return Object.assign({}, m, data, { updatedAt: new Date().toISOString() });
-          return m;
+        data.id = editId;
+        data.mentor = (getMenteeById(editId) || {}).mentor || '';
+        updateMentee(data).then(function () {
+          flash('Mentee updated successfully.', 'success');
+          setTimeout(function () { window.location.href = 'view.html?id=' + encodeURIComponent(editId); }, 600);
+        }).catch(function (err) {
+          flash('Failed to update: ' + err.message, 'danger');
         });
-        saveMentees(list);
-        flash('Mentee updated successfully.', 'success');
-        setTimeout(function () { window.location.href = 'view.html?id=' + encodeURIComponent(editId); }, 600);
       } else {
-        data.id = uid();
-        data.createdAt = new Date().toISOString();
         data.mentor = 'admin';
-        list.push(data);
-        saveMentees(list);
-        flash('Mentee added successfully.', 'success');
-        setTimeout(function () { window.location.href = 'index.html'; }, 600);
+        addMentee(data).then(function () {
+          flash('Mentee added successfully.', 'success');
+          setTimeout(function () { window.location.href = 'index.html'; }, 600);
+        }).catch(function (err) {
+          flash('Failed to add: ' + err.message, 'danger');
+        });
       }
     });
   }
@@ -374,59 +385,63 @@
   function renderView() {
     var urlParams = new URLSearchParams(window.location.search);
     var id = urlParams.get('id');
-    var m = getMenteeById(id);
     var nameEl = document.getElementById('detailName');
     if (!nameEl) return;
 
-    if (!m) {
-      nameEl.textContent = 'Mentee not found';
-      document.getElementById('detailContent').innerHTML = '<div class="empty-state"><h3>Mentee not found</h3><p>The mentee may have been deleted.</p><a href="index.html" class="btn btn-outline">&larr; Back to Dashboard</a></div>';
-      return;
-    }
+    showLoading(document.getElementById('detailContent'));
 
-    var age = computeAge(m.birthday);
-    var moduleLabel = '';
-    if (m.module && m.moduleLesson) moduleLabel = m.module + ' - ' + m.moduleLesson;
-    else if (m.moduleLesson) moduleLabel = m.moduleLesson;
-    else if (m.module) moduleLabel = m.module;
-    else moduleLabel = '—';
+    fetchMentees().then(function () {
+      var m = getMenteeById(id);
+      if (!m) {
+        nameEl.textContent = 'Mentee not found';
+        document.getElementById('detailContent').innerHTML = '<div class="empty-state"><h3>Mentee not found</h3><p>The mentee may have been deleted.</p><a href="index.html" class="btn btn-outline">&larr; Back to Dashboard</a></div>';
+        return;
+      }
 
-    document.getElementById('avatar').textContent = initials(m.name);
-    nameEl.textContent = m.name || 'Untitled';
-    document.getElementById('detailMeta').textContent =
-      (m.mentor ? 'Mentor: @' + m.mentor : '') +
-      (m.createdAt ? '  ·  Added ' + new Date(m.createdAt).toLocaleDateString() : '');
-    document.getElementById('statusBadge').className = 'badge ' + statusBadgeClass(m.status);
-    document.getElementById('statusBadge').textContent = m.status;
+      var age = computeAge(m.birthday);
+      var moduleLabel = '';
+      if (m.module && m.moduleLesson) moduleLabel = m.module + ' - ' + m.moduleLesson;
+      else if (m.moduleLesson) moduleLabel = m.moduleLesson;
+      else if (m.module) moduleLabel = m.module;
+      else moduleLabel = '\u2014';
 
-    var grid = document.getElementById('detailGrid');
-    grid.innerHTML =
-      item('Status', esc(m.status)) +
-      item('Contact Number', esc(m.contact || '—')) +
-      item('Birthday', m.birthday ? formatDate(m.birthday) : '—') +
-      item('Age', age === null ? '—' : (age + ' years')) +
-      item('Address', esc(m.address || '—')) +
-      item('Potential Mentor', yesNoBadge(m.potentialMentor)) +
-      item('CLDP 1', trainingBadge(m.cldp1)) +
-      item('CLDP 2', trainingBadge(m.cldp2)) +
-      item('CLDP 3', trainingBadge(m.cldp3)) +
-      item('Module / Lesson', esc(moduleLabel)) +
-      item('C2S 101', esc(m.c2s101 || '—')) +
-      item('Other Trainings', esc(m.otherTrainings || '—')) +
-      item('Remarks', esc(m.remarks || '—'), true);
+      document.getElementById('avatar').textContent = initials(m.name);
+      nameEl.textContent = m.name || 'Untitled';
+      document.getElementById('detailMeta').textContent =
+        (m.mentor ? 'Mentor: @' + m.mentor : '') +
+        (m.createdAt ? '  \u00B7  Added ' + new Date(m.createdAt).toLocaleDateString() : '');
+      document.getElementById('statusBadge').className = 'badge ' + statusBadgeClass(m.status);
+      document.getElementById('statusBadge').textContent = m.status;
 
-    var readonly = urlParams.get('readonly') === '1';
-    var editBtn = document.getElementById('editBtn');
-    var deleteBtn = document.getElementById('deleteBtn');
-    if (readonly) {
-      if (editBtn) editBtn.style.display = 'none';
-      if (deleteBtn) deleteBtn.style.display = 'none';
-    } else {
-      document.getElementById('editBtn').href = 'edit.html?id=' + encodeURIComponent(m.id);
-      document.getElementById('deleteBtn').addEventListener('click', function () {
-        handleDelete(m.id);
-      });
-    }
+      var grid = document.getElementById('detailGrid');
+      grid.innerHTML =
+        item('Status', esc(m.status)) +
+        item('Contact Number', esc(m.contact || '\u2014')) +
+        item('Birthday', m.birthday ? formatDate(m.birthday) : '\u2014') +
+        item('Age', age === null ? '\u2014' : (age + ' years')) +
+        item('Address', esc(m.address || '\u2014')) +
+        item('Potential Mentor', yesNoBadge(m.potentialMentor)) +
+        item('CLDP 1', trainingBadge(m.cldp1)) +
+        item('CLDP 2', trainingBadge(m.cldp2)) +
+        item('CLDP 3', trainingBadge(m.cldp3)) +
+        item('Module / Lesson', esc(moduleLabel)) +
+        item('C2S 101', esc(m.c2s101 || '\u2014')) +
+        item('Other Trainings', esc(m.otherTrainings || '\u2014')) +
+        item('Remarks', esc(m.remarks || '\u2014'), true);
+
+      var readonly = urlParams.get('readonly') === '1';
+      var editBtn = document.getElementById('editBtn');
+      var deleteBtn = document.getElementById('deleteBtn');
+      if (readonly) {
+        if (editBtn) editBtn.style.display = 'none';
+        if (deleteBtn) deleteBtn.style.display = 'none';
+      } else {
+        document.getElementById('editBtn').href = 'edit.html?id=' + encodeURIComponent(m.id);
+        document.getElementById('deleteBtn').addEventListener('click', function () {
+          handleDelete(m.id);
+        });
+      }
+    });
   }
 
   function item(label, value, full) {
@@ -445,37 +460,6 @@
         flash('Theme updated.', 'success');
       });
     }
-
-    var smtpForm = document.getElementById('smtpForm');
-    if (smtpForm) {
-      var saved = loadSmtp();
-      if (saved) {
-        document.getElementById('smtpUser').value = saved.user || '';
-        document.getElementById('adminEmail').value = saved.adminEmail || '';
-        document.getElementById('smtpPass').value = saved.pass || '';
-      }
-      smtpForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var user = document.getElementById('smtpUser').value.trim();
-        var pass = document.getElementById('smtpPass').value.trim();
-        var adminEmail = document.getElementById('adminEmail').value.trim();
-        saveSmtp({ user: user, pass: pass, adminEmail: adminEmail });
-        flash('SMTP settings saved.', 'success');
-      });
-    }
-  }
-
-  function loadSmtp() {
-    try {
-      var raw = localStorage.getItem('c2s_smtp');
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function saveSmtp(data) {
-    localStorage.setItem('c2s_smtp', JSON.stringify(data));
   }
 
   /* ---------- Admin dashboard ---------- */
@@ -485,63 +469,239 @@
     var tableEl = document.getElementById('adminTableContainer');
     if (!statsEl || !tableEl) return;
 
-    var mentors = getMentors().filter(function (mn) { return mn.username !== 'admin'; });
-    var mentees = getMentees();
-    var totalMentees = mentees.length;
-    var totalMembers = mentors.length + totalMentees;
+    showLoading(tableEl);
 
-    statsEl.innerHTML =
-      card('Total Mentors', mentors.length, 'total') +
-      card('Total Mentees', totalMentees, 'active') +
-      card('Total Members', totalMembers, 'transferred');
+    Promise.all([fetchMentors(), fetchMentees()]).then(function () {
+      var mentors = getMentors().filter(function (mn) { return mn.username !== 'admin'; });
+      var mentees = getMentees();
+      var totalMentees = mentees.length;
+      var totalMembers = mentors.length + totalMentees;
 
-    if (mentors.length === 0) {
-      tableEl.innerHTML = '<div class="empty-state"><h3>No mentors registered</h3><p>Mentor accounts will appear here once created.</p></div>';
-      return;
-    }
+      statsEl.innerHTML =
+        card('Total Mentors', mentors.length, 'total') +
+        card('Total Mentees', totalMentees, 'active') +
+        card('Total Members', totalMembers, 'transferred');
 
-    var html = mentors.map(function (mn) {
-      var own = mentees.filter(function (m) { return m.mentor === mn.username; });
-      var count = own.length;
+      if (mentors.length === 0) {
+        tableEl.innerHTML = '<div class="empty-state"><h3>No mentors registered</h3><p>Mentor accounts will appear here once created.</p></div>';
+        return;
+      }
 
-      var menteeRows = own.length === 0
-        ? '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No mentees assigned</td></tr>'
-        : own.map(function (m) {
-            return '<tr>' +
-              '<td><a href="view.html?id=' + encodeURIComponent(m.id) + '&amp;readonly=1" class="mentee-name" style="color:var(--primary);">' + esc(m.name) + '</a></td>' +
-              '<td><span class="badge ' + statusBadgeClass(m.status) + '"><span class="badge-dot"></span>' + esc(m.status) + '</span></td>' +
-              '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
-              '<td style="max-width:280px;">' + esc(m.remarks || '—') + '</td>' +
-              '</tr>';
-          }).join('');
+      var html = mentors.map(function (mn) {
+        var own = mentees.filter(function (m) { return m.mentor === mn.username; });
+        var count = own.length;
 
-      var menteeBlock = own.length
-        ? '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);">' +
-          '<table><thead><tr><th>Mentee</th><th>Status</th><th>Potential Mentor</th><th>Remarks</th></tr></thead>' +
-          '<tbody>' + menteeRows + '</tbody></table></div>'
-        : '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);padding:16px 20px;color:var(--text-muted);">No mentees assigned.</div>';
+        var menteeRows = own.length === 0
+          ? '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No mentees assigned</td></tr>'
+          : own.map(function (m) {
+              return '<tr>' +
+                '<td><a href="view.html?id=' + encodeURIComponent(m.id) + '&amp;readonly=1" class="mentee-name" style="color:var(--primary);">' + esc(m.name) + '</a></td>' +
+                '<td><span class="badge ' + statusBadgeClass(m.status) + '"><span class="badge-dot"></span>' + esc(m.status) + '</span></td>' +
+                '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
+                '<td style="max-width:280px;">' + esc(m.remarks || '\u2014') + '</td>' +
+                '</tr>';
+            }).join('');
 
-      return '<div class="table-wrap admin-group" style="margin-bottom:16px;">' +
-        '<div class="admin-mentor" data-mentor="' + esc(mn.username) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
-        '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span><div class="mentee-sub">@' + esc(mn.username) + '</div></div>' +
-        '<div><div class="info-label">Email</div><div class="info-value">' + esc(mn.email) + '</div></div>' +
-        '<div><div class="info-label">Password</div><div class="info-value">' + esc(mn.password || '—') + '</div></div>' +
-        '<div><div class="info-label">Mentees</div><div><span class="badge badge-neutral">' + count + '</span></div></div>' +
-        '<div class="admin-caret" style="color:var(--text-muted);">&#9662;</div>' +
-        '</div>' + menteeBlock + '</div>';
-    }).join('');
+        var menteeBlock = own.length
+          ? '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);">' +
+            '<table><thead><tr><th>Mentee</th><th>Status</th><th>Potential Mentor</th><th>Remarks</th></tr></thead>' +
+            '<tbody>' + menteeRows + '</tbody></table></div>'
+          : '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);padding:16px 20px;color:var(--text-muted);">No mentees assigned.</div>';
 
-    tableEl.innerHTML = html;
+        return '<div class="table-wrap admin-group" style="margin-bottom:16px;">' +
+          '<div class="admin-mentor" data-mentor="' + esc(mn.username) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
+          '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span><div class="mentee-sub">@' + esc(mn.username) + '</div></div>' +
+          '<div><div class="info-label">Email</div><div class="info-value">' + esc(mn.email) + '</div></div>' +
+          '<div><div class="info-label">Password</div><div class="info-value">' + esc(mn.password || '\u2014') + '</div></div>' +
+          '<div><div class="info-label">Mentees</div><div><span class="badge badge-neutral">' + count + '</span></div></div>' +
+          '<div class="admin-caret" style="color:var(--text-muted);">&#9662;</div>' +
+          '</div>' + menteeBlock + '</div>';
+      }).join('');
 
-    tableEl.querySelectorAll('.admin-group').forEach(function (group) {
-      var block = group.querySelector('.admin-mentees');
-      var caret = group.querySelector('.admin-caret');
-      group.querySelector('.admin-mentor').addEventListener('click', function () {
-        var isHidden = block.style.display === 'none';
-        block.style.display = isHidden ? '' : 'none';
-        caret.innerHTML = isHidden ? '&#9652;' : '&#9662;';
+      tableEl.innerHTML = html;
+
+      tableEl.querySelectorAll('.admin-group').forEach(function (group) {
+        var block = group.querySelector('.admin-mentees');
+        var caret = group.querySelector('.admin-caret');
+        group.querySelector('.admin-mentor').addEventListener('click', function () {
+          var isHidden = block.style.display === 'none';
+          block.style.display = isHidden ? '' : 'none';
+          caret.innerHTML = isHidden ? '&#9652;' : '&#9662;';
+        });
       });
     });
+  }
+
+  /* ---------- Authentication ---------- */
+
+  var ADMIN_EMAIL = 'admin@c2s.local';
+  var ADMIN_PASSWORD = 'admin123';
+
+  var DEFAULT_ADMIN = { username: 'admin', name: 'Administrator', email: ADMIN_EMAIL, password: ADMIN_PASSWORD };
+
+  function getSessionUser() {
+    try {
+      var raw = localStorage.getItem(SESSION_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setSessionUser(user, redirect) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    if (redirect) window.location.href = redirect;
+  }
+
+  function clearSession() {
+    localStorage.removeItem(SESSION_KEY);
+  }
+
+  function isAdmin(user) {
+    return user && user.email === ADMIN_EMAIL;
+  }
+
+  function indexOfMentorByEmail(email) {
+    if (!email) return -1;
+    for (var i = 0; i < _mentors.length; i++) {
+      if (_mentors[i].email === email) return i;
+    }
+    return -1;
+  }
+
+  function loadMentorsForAuth(cb) {
+    if (_mentors.length || GAS_URL) {
+      fetchMentors().then(function () {
+        if (_mentors.length) {
+          var existing = false;
+          for (var i = 0; i < _mentors.length; i++) {
+            if (_mentors[i].email === ADMIN_EMAIL) { existing = true; break; }
+          }
+          if (!existing) _mentors.unshift(DEFAULT_ADMIN);
+        }
+        cb();
+      });
+      return;
+    }
+    _mentors = [DEFAULT_ADMIN];
+    cb();
+  }
+
+  function renderNav() {
+    var user = getSessionUser();
+    var container = document.querySelector('.topbar-actions');
+    if (!container) return;
+
+    var links = [];
+
+    if (window.AUTH_PAGE) return;
+
+    if (user) {
+      if (isAdmin(user)) {
+        links.push('<a href="admin.html">Admin</a>');
+      }
+      links.push('<a href="settings.html">Settings</a>');
+      links.push('<span class="topbar-user">' + esc(user.name || user.email) + '</span>');
+      links.push('<a href="#" id="logoutLink" class="btn btn-outline btn-sm">Logout</a>');
+    } else {
+      links.push('<a href="login.html" class="btn btn-outline btn-sm">Login</a>');
+    }
+
+    container.innerHTML =
+      '<nav class="topbar-nav">' + links.join('') + '</nav>';
+
+    var logout = document.getElementById('logoutLink');
+    if (logout) {
+      logout.addEventListener('click', function (e) {
+        e.preventDefault();
+        clearSession();
+        window.location.href = 'login.html';
+      });
+    }
+  }
+
+  function requireAuth() {
+    var user = getSessionUser();
+    var protectedPage = !/login\.html|register\.html/.test(window.location.pathname);
+    if (protectedPage && !user && GAS_URL) {
+      window.location.href = 'login.html';
+      return false;
+    }
+    return true;
+  }
+
+  function bindAuth() {
+    var loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+      loginForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var email = document.getElementById('loginEmail').value.trim().toLowerCase();
+        var password = document.getElementById('loginPassword').value;
+
+        if (!email || !password) { flash('Please enter your email and password.', 'danger'); return; }
+
+        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+          setSessionUser({ username: 'admin', name: 'Administrator', email: ADMIN_EMAIL }, 'admin.html');
+          return;
+        }
+
+        loadMentorsForAuth(function () {
+          var idx = indexOfMentorByEmail(email);
+          if (idx === -1) {
+            fetchMentors().then(function () {
+              var idx2 = indexOfMentorByEmail(email);
+              if (idx2 === -1) { flash('No account found with that email.', 'danger'); return; }
+              if (_mentors[idx2].password !== password) { flash('Incorrect password.', 'danger'); return; }
+              var m2 = _mentors[idx2];
+              setSessionUser({ username: m2.username, name: m2.name, email: m2.email }, 'index.html');
+            });
+            return;
+          }
+          if (_mentors[idx].password !== password) { flash('Incorrect password.', 'danger'); return; }
+          var m = _mentors[idx];
+          setSessionUser({ username: m.username, name: m.name, email: m.email }, 'index.html');
+        });
+      });
+    }
+
+    var registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+      registerForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var name = document.getElementById('regName').value.trim();
+        var email = document.getElementById('regEmail').value.trim().toLowerCase();
+        var password = document.getElementById('regPassword').value;
+        var confirm = document.getElementById('regConfirm').value;
+
+        if (!name) { flash('Full name is required.', 'danger'); return; }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { flash('Please enter a valid email address.', 'danger'); return; }
+        if (email === ADMIN_EMAIL) { flash('That email is already registered.', 'danger'); return; }
+        if (password.length < 8) { flash('Password must be at least 8 characters.', 'danger'); return; }
+        if (password !== confirm) { flash('Passwords do not match.', 'danger'); return; }
+
+        loadMentorsForAuth(function () {
+          var idx = indexOfMentorByEmail(email);
+          if (idx !== -1) { flash('That email is already registered.', 'danger'); return; }
+
+          var username = email.split('@')[0].replace(/[^a-z0-9]/g, '') || ('user' + Date.now().toString(36));
+          var newMentor = { username: username, name: name, email: email, password: password };
+          _mentors.push(newMentor);
+
+          if (GAS_URL) {
+            apiPost('addMentor', { data: { username: username, name: name, email: email, password: password } }).then(function () {
+              flash('Account created successfully. Please sign in.', 'success');
+              setTimeout(function () { window.location.href = 'login.html'; }, 600);
+            }).catch(function () {
+              flash('Account created. Please sign in.', 'success');
+              setTimeout(function () { window.location.href = 'login.html'; }, 600);
+            });
+          } else {
+            flash('Account created successfully. Please sign in.', 'success');
+            setTimeout(function () { window.location.href = 'login.html'; }, 600);
+          }
+        });
+      });
+    }
   }
 
   /* ---------- Init ---------- */
@@ -552,13 +712,37 @@
     var themeBtn = document.getElementById('themeToggle');
     if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
 
-    if (document.getElementById('statsRow')) renderStats();
-    if (document.getElementById('tableContainer')) {
-      renderTable();
-      var searchEl = document.getElementById('searchInput');
-      var filterEl = document.getElementById('statusFilter');
-      if (searchEl) searchEl.addEventListener('input', renderTable);
-      if (filterEl) { filterEl.addEventListener('change', renderTable); filterEl.addEventListener('input', renderTable); }
+    renderNav();
+    bindAuth();
+
+    if (window.AUTH_PAGE) return;
+
+    if (!requireAuth()) return;
+
+    if (!GAS_URL) {
+      flash('Google Apps Script URL not configured. Please set GAS_URL in app.js.', 'danger');
+      return;
+    }
+
+    if (document.getElementById('statsRow')) {
+      showLoading(document.getElementById('statsRow'));
+      fetchMentees().then(function () {
+        renderStats();
+        renderTable();
+        var searchEl = document.getElementById('searchInput');
+        var filterEl = document.getElementById('statusFilter');
+        if (searchEl) searchEl.addEventListener('input', renderTable);
+        if (filterEl) { filterEl.addEventListener('change', renderTable); filterEl.addEventListener('input', renderTable); }
+      });
+    } else if (document.getElementById('tableContainer')) {
+      showLoading(document.getElementById('tableContainer'));
+      fetchMentees().then(function () {
+        renderTable();
+        var searchEl = document.getElementById('searchInput');
+        var filterEl = document.getElementById('statusFilter');
+        if (searchEl) searchEl.addEventListener('input', renderTable);
+        if (filterEl) { filterEl.addEventListener('change', renderTable); filterEl.addEventListener('input', renderTable); }
+      });
     }
 
     if (window.ADMIN_MODE) renderAdmin();
