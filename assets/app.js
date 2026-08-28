@@ -536,6 +536,7 @@
 
   var ADMIN_EMAIL = 'admin@c2s.local';
   var ADMIN_PASSWORD = 'admin123';
+  var MENTORS_CACHE_KEY = 'c2s_mentors_cache';
 
   var DEFAULT_ADMIN = { username: 'admin', name: 'Administrator', email: ADMIN_EMAIL, password: ADMIN_PASSWORD };
 
@@ -569,22 +570,63 @@
     return -1;
   }
 
-  function loadMentorsForAuth(cb) {
-    if (_mentors.length || GAS_URL) {
-      fetchMentors().then(function () {
-        if (_mentors.length) {
-          var existing = false;
-          for (var i = 0; i < _mentors.length; i++) {
-            if (_mentors[i].email === ADMIN_EMAIL) { existing = true; break; }
-          }
-          if (!existing) _mentors.unshift(DEFAULT_ADMIN);
-        }
-        cb();
+  function getCachedMentors() {
+    try {
+      var raw = localStorage.getItem(MENTORS_CACHE_KEY);
+      var list = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(list) && list.length) return list;
+    } catch (e) {}
+    return null;
+  }
+
+  function saveCachedMentors(list) {
+    try {
+      localStorage.setItem(MENTORS_CACHE_KEY, JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  function mergeMentors(list) {
+    var merged = (list || []).slice();
+    var cached = getCachedMentors();
+    if (cached) {
+      cached.forEach(function (c) {
+        var exists = merged.some(function (m) { return m.email === c.email; });
+        if (!exists) merged.push(c);
       });
-      return;
     }
-    _mentors = [DEFAULT_ADMIN];
-    cb();
+    if (!merged.some(function (m) { return m.email === ADMIN_EMAIL; })) {
+      merged.unshift(DEFAULT_ADMIN);
+    }
+    saveCachedMentors(merged);
+    return merged;
+  }
+
+  function loadMentorsForAuth(cb) {
+    function done() {
+      if (!_mentors.some(function (m) { return m.email === ADMIN_EMAIL; })) {
+        _mentors.unshift(DEFAULT_ADMIN);
+      }
+      cb();
+    }
+
+    function fetchAndMerge() {
+      fetchMentors().then(function () {
+        var fetched = Array.isArray(_mentors) ? _mentors : [];
+        _mentors = mergeMentors(fetched);
+        done();
+      });
+    }
+
+    if (_mentors.length) { done(); return; }
+
+    var cached = getCachedMentors();
+    if (cached && cached.length) {
+      _mentors = cached.slice();
+      done();
+      fetchAndMerge();
+    } else {
+      fetchAndMerge();
+    }
   }
 
   function renderNav() {
@@ -686,6 +728,7 @@
           var username = email.split('@')[0].replace(/[^a-z0-9]/g, '') || ('user' + Date.now().toString(36));
           var newMentor = { username: username, name: name, email: email, password: password };
           _mentors.push(newMentor);
+          saveCachedMentors(_mentors);
 
           if (GAS_URL) {
             apiPost('addMentor', { data: { username: username, name: name, email: email, password: password } }).then(function () {
