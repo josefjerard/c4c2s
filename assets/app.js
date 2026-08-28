@@ -211,7 +211,7 @@
     renderTable();
   }
 
-  /* ---------- Mentor page (mentor.html) ---------- */
+  /* ---------- Mentor data ---------- */
 
   var SAMPLE_MENTORS = [
     { username: 'admin', name: 'Administrator', email: 'admin@c2s.local' },
@@ -227,73 +227,6 @@
     } catch (e) {}
     localStorage.setItem('c2s_mentors', JSON.stringify(SAMPLE_MENTORS));
     return SAMPLE_MENTORS.slice();
-  }
-
-  function renderMentors() {
-    var container = document.getElementById('mentorTableContainer');
-    if (!container) return;
-    var searchEl = document.getElementById('mentorSearch');
-    var query = searchEl ? searchEl.value.trim().toLowerCase() : '';
-    var mentors = getMentors().filter(function (mn) {
-      return !query ||
-        mn.name.toLowerCase().indexOf(query) !== -1 ||
-        mn.username.toLowerCase().indexOf(query) !== -1;
-    });
-
-    if (mentors.length === 0) {
-      container.innerHTML = '<div class="empty-state"><h3>No mentors found</h3><p>Try a different search.</p></div>';
-      return;
-    }
-
-    var rows = mentors.map(function (mn) {
-      var count = getMentees().filter(function (m) { return m.mentor === mn.username; }).length;
-      return '<tr>' +
-        '<td><div class="mentee-name">' + esc(mn.name) + '</div><div class="mentee-sub">@' + esc(mn.username) + '</div></td>' +
-        '<td>' + esc(mn.email) + '</td>' +
-        '<td>' + count + '</td>' +
-        '<td><div class="row-actions"><button type="button" class="btn btn-outline btn-sm" data-mentor="' + esc(mn.username) + '">View Mentees</button></div></td>' +
-        '</tr>';
-    }).join('');
-
-    container.innerHTML =
-      '<table><thead><tr>' +
-      '<th>Mentor</th><th>Email</th><th>Mentees</th><th style="text-align:right;">Action</th>' +
-      '</tr></thead><tbody>' + rows + '</tbody></table>';
-
-    container.querySelectorAll('[data-mentor]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        showMentorDetail(btn.getAttribute('data-mentor'));
-      });
-    });
-  }
-
-  function showMentorDetail(username) {
-    var name = 'Unknown mentor';
-    var mn = getMentors().filter(function (m) { return m.username === username; })[0];
-    if (mn) name = mn.name;
-    var mentees = getMentees().filter(function (m) { return m.mentor === username; });
-    var container = document.getElementById('mentorDetail');
-    container.style.display = 'block';
-
-    var rows = mentees.length === 0
-      ? '<tr><td colspan="4" style="text-align:center;">No mentees assigned.</td></tr>'
-      : mentees.map(function (m) {
-          return '<tr><td><div class="mentee-name">' + esc(m.name) + '</div></td>' +
-            '<td><span class="badge ' + statusBadgeClass(m.status) + '"><span class="badge-dot"></span>' + esc(m.status) + '</span></td>' +
-            '<td>' + trainingBadge(m.cldp1) + '</td>' +
-            '<td><div class="row-actions"><a href="view.html?id=' + encodeURIComponent(m.id) + '" class="btn btn-outline btn-sm">View</a></div></td></tr>';
-        }).join('');
-
-    container.innerHTML =
-      '<div style="margin-top:24px;" class="table-wrap">' +
-      '<div class="detail-head" style="background:none;border:none;padding:16px 20px;">' +
-      '<div><h2 style="font-size:1.1rem;">' + esc(name) + '&rsquo;s Mentees</h2>' +
-      '<div class="meta" style="color:var(--text-muted);font-size:0.85rem;">' + mentees.length + ' assigned</div></div></div>' +
-      '<table><thead><tr><th>Mentee</th><th>Status</th><th>CLDP 1</th><th style="text-align:right;">Action</th></tr></thead>' +
-      '<tbody>' + rows + '</tbody></table>' +
-      '</div>';
-
-    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   /* ---------- Create / Edit form ---------- */
@@ -572,12 +505,6 @@
       var filterEl = document.getElementById('statusFilter');
       if (searchEl) searchEl.addEventListener('input', renderTable);
       if (filterEl) { filterEl.addEventListener('change', renderTable); filterEl.addEventListener('input', renderTable); }
-    }
-
-    if (document.getElementById('mentorTableContainer')) {
-      renderMentors();
-      var ms = document.getElementById('mentorSearch');
-      if (ms) ms.addEventListener('input', renderMentors);
     }
 
     if (window.ADMIN_MODE) renderAdmin();
