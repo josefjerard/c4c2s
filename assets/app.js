@@ -17,17 +17,43 @@
     { name: 'Luke Navarro', status: 'Inactive', contact: '09171234508', birthday: '2004-02-14', address: '246 Espana Blvd., Brgy. Dapitan, Manila', cldp1: 'Unenrolled', cldp2: 'Unenrolled', cldp3: 'Unenrolled', moduleLesson: 'Lesson 1', module: 'Module 1', potentialMentor: 'No', c2s101: 'Lesson 1', otherTrainings: 'Sports Ministry', remarks: 'Recently inactive due to school schedule.' }
   ];
 
-  function getMentees() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      var list = raw ? JSON.parse(raw) : [];
-      if (Array.isArray(list) && list.length > 0) return list;
-    } catch (e) {}
+  var MENTOR_SLOTS = ['jdoe', 'ssmith', 'mgarcia'];
+
+  function seedMentees() {
     var seeded = SAMPLE_MENTEES.map(function (m, i) {
-      return Object.assign({}, m, { id: 'sample' + (i + 1), createdAt: new Date().toISOString(), mentor: 'admin' });
+      return Object.assign({}, m, {
+        id: 'sample' + (i + 1),
+        createdAt: new Date().toISOString(),
+        mentor: MENTOR_SLOTS[i % MENTOR_SLOTS.length]
+      });
     });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-    return seeded.slice();
+    return seeded;
+  }
+
+  function getMentees() {
+    var list;
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      list = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      list = [];
+    }
+    if (!Array.isArray(list) || list.length === 0) {
+      return seedMentees().slice();
+    }
+    var redistributed = false;
+    if (list.some(function (m) { return m.mentor === 'admin'; })) {
+      list = list.map(function (m, i) {
+        if (m.mentor === 'admin') {
+          m = Object.assign({}, m, { mentor: MENTOR_SLOTS[i % MENTOR_SLOTS.length] });
+          redistributed = true;
+        }
+        return m;
+      });
+    }
+    if (redistributed) localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    return list;
   }
 
   function saveMentees(list) {
