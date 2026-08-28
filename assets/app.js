@@ -521,9 +521,9 @@
           '<tbody>' + menteeRows + '</tbody></table></div>'
         : '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);padding:16px 20px;color:var(--text-muted);">No mentees assigned.</div>';
 
-      return '<div class="table-wrap" style="margin-bottom:24px;">' +
+      return '<div class="table-wrap admin-group" style="margin-bottom:24px;">' +
         '<div class="admin-mentor" data-mentor="' + esc(mn.username) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
-        '<div style="flex:1;min-width:180px;"><div class="mentee-name">' + esc(mn.name) + '</div><div class="mentee-sub">@' + esc(mn.username) + '</div></div>' +
+        '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span><div class="mentee-sub">@' + esc(mn.username) + '</div></div>' +
         '<div><div class="info-label">Email</div><div class="info-value">' + esc(mn.email) + '</div></div>' +
         '<div><div class="info-label">Password</div><div class="info-value">' + esc(mn.password || '—') + '</div></div>' +
         '<div><div class="info-label">Mentees</div><div><span class="badge badge-neutral">' + count + '</span></div></div>' +
@@ -533,13 +533,23 @@
 
     tableEl.innerHTML = html;
 
-    tableEl.querySelectorAll('.admin-mentor').forEach(function (card) {
-      card.addEventListener('click', function () {
-        var block = card.nextElementSibling;
-        var caret = card.querySelector('.admin-caret');
-        var isHidden = block.style.display === 'none';
-        block.style.display = isHidden ? '' : 'none';
-        caret.innerHTML = isHidden ? '&#9652;' : '&#9662;';
+    tableEl.querySelectorAll('.admin-group').forEach(function (group) {
+      var block = group.querySelector('.admin-mentees');
+      var caret = group.querySelector('.admin-caret');
+
+      function expand() {
+        block.style.display = '';
+        caret.innerHTML = '&#9652;';
+      }
+      function collapse() {
+        block.style.display = 'none';
+        caret.innerHTML = '&#9662;';
+      }
+
+      group.addEventListener('mouseenter', expand);
+      group.addEventListener('mouseleave', collapse);
+      group.querySelector('.admin-mentor').addEventListener('click', function () {
+        if (block.style.display === 'none') expand(); else collapse();
       });
     });
   }

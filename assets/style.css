@@ -705,6 +705,31 @@ td .mentee-sub {
   font-size: 0.85rem;
 }
 
+.admin-mentor {
+  transition: background 0.15s ease;
+}
+
+.admin-mentor:hover {
+  background: var(--surface-alt);
+}
+
+.admin-mentor-name {
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s ease;
+}
+
+.admin-group:hover .admin-mentor-name {
+  text-decoration-color: currentColor;
+}
+
+.admin-mentees {
+  overflow-x: auto;
+}
+
 /* Toggle switch */
 .switch {
   position: relative;
