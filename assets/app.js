@@ -415,10 +415,18 @@
       item('Other Trainings', esc(m.otherTrainings || '—')) +
       item('Remarks', esc(m.remarks || '—'), true);
 
-    document.getElementById('editBtn').href = 'edit.html?id=' + encodeURIComponent(m.id);
-    document.getElementById('deleteBtn').addEventListener('click', function () {
-      handleDelete(m.id);
-    });
+    var readonly = urlParams.get('readonly') === '1';
+    var editBtn = document.getElementById('editBtn');
+    var deleteBtn = document.getElementById('deleteBtn');
+    if (readonly) {
+      if (editBtn) editBtn.style.display = 'none';
+      if (deleteBtn) deleteBtn.style.display = 'none';
+    } else {
+      document.getElementById('editBtn').href = 'edit.html?id=' + encodeURIComponent(m.id);
+      document.getElementById('deleteBtn').addEventListener('click', function () {
+        handleDelete(m.id);
+      });
+    }
   }
 
   function item(label, value, full) {
@@ -493,17 +501,47 @@
     }
 
     var html = mentors.map(function (mn) {
-      var count = mentees.filter(function (m) { return m.mentor === mn.username; }).length;
+      var own = mentees.filter(function (m) { return m.mentor === mn.username; });
+      var count = own.length;
+
+      var menteeRows = own.length === 0
+        ? '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No mentees assigned</td></tr>'
+        : own.map(function (m) {
+            return '<tr>' +
+              '<td><a href="view.html?id=' + encodeURIComponent(m.id) + '&amp;readonly=1" class="mentee-name" style="color:var(--primary);">' + esc(m.name) + '</a></td>' +
+              '<td><span class="badge ' + statusBadgeClass(m.status) + '"><span class="badge-dot"></span>' + esc(m.status) + '</span></td>' +
+              '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
+              '<td style="max-width:280px;">' + esc(m.remarks || '—') + '</td>' +
+              '</tr>';
+          }).join('');
+
+      var menteeBlock = own.length
+        ? '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);">' +
+          '<table><thead><tr><th>Mentee</th><th>Status</th><th>Potential Mentor</th><th>Remarks</th></tr></thead>' +
+          '<tbody>' + menteeRows + '</tbody></table></div>'
+        : '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);padding:16px 20px;color:var(--text-muted);">No mentees assigned.</div>';
+
       return '<div class="table-wrap" style="margin-bottom:24px;">' +
-        '<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;">' +
+        '<div class="admin-mentor" data-mentor="' + esc(mn.username) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
         '<div style="flex:1;min-width:180px;"><div class="mentee-name">' + esc(mn.name) + '</div><div class="mentee-sub">@' + esc(mn.username) + '</div></div>' +
         '<div><div class="info-label">Email</div><div class="info-value">' + esc(mn.email) + '</div></div>' +
         '<div><div class="info-label">Password</div><div class="info-value">' + esc(mn.password || '—') + '</div></div>' +
         '<div><div class="info-label">Mentees</div><div><span class="badge badge-neutral">' + count + '</span></div></div>' +
-        '</div></div>';
+        '<div class="admin-caret" style="color:var(--text-muted);">&#9662;</div>' +
+        '</div>' + menteeBlock + '</div>';
     }).join('');
 
     tableEl.innerHTML = html;
+
+    tableEl.querySelectorAll('.admin-mentor').forEach(function (card) {
+      card.addEventListener('click', function () {
+        var block = card.nextElementSibling;
+        var caret = card.querySelector('.admin-caret');
+        var isHidden = block.style.display === 'none';
+        block.style.display = isHidden ? '' : 'none';
+        caret.innerHTML = isHidden ? '&#9652;' : '&#9662;';
+      });
+    });
   }
 
   /* ---------- Init ---------- */
