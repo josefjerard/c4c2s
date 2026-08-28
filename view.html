@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mentee Details - C2S Mentee Management</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-logo">C2</span>
+        <span>C2S Mentee Management</span>
+      </a>
+      <div class="topbar-actions">
+        <nav class="topbar-nav">
+          <a href="settings.html">Settings</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="flashMessage"></div>
+
+    <div class="page-header">
+      <h1>Mentee Details</h1>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <a href="index.html" class="btn btn-outline">&larr; Back to Dashboard</a>
+        <a href="#" id="editBtn" class="btn btn-outline">Edit</a>
+        <button type="button" id="deleteBtn" class="btn btn-danger-outline">Delete</button>
+      </div>
+    </div>
+
+    <div id="detailContent">
+      <div class="detail-wrap">
+        <div class="detail-head">
+          <div class="detail-title">
+            <div class="detail-avatar" id="avatar">?</div>
+            <div>
+              <h2 id="detailName">Loading...</h2>
+              <div class="meta" id="detailMeta"></div>
+            </div>
+          </div>
+          <span class="badge badge-neutral" id="statusBadge">Active</span>
+        </div>
+        <div class="detail-body">
+          <div class="info-grid" id="detailGrid"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">C2S Mentee Management System &middot; Frontend Prototype</footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

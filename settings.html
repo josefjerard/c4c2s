@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - C2S Mentee Management</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-logo">C2</span>
+        <span>C2S Mentee Management</span>
+      </a>
+      <div class="topbar-actions">
+        <nav class="topbar-nav">
+          <a href="settings.html" class="active">Settings</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="flashMessage"></div>
+
+    <div class="page-header">
+      <h1>Settings</h1>
+    </div>
+
+    <div class="settings-card">
+      <h2>Appearance</h2>
+      <p class="desc">Customize how the application looks.</p>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <h4>Dark Mode</h4>
+          <p>Switch between light and dark theme.</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="darkModeToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <h2>Gmail SMTP Notifications</h2>
+      <p class="desc">Enter your Gmail app password to receive email notifications when mentors create, update, or delete mentees.</p>
+
+      <form id="smtpForm" class="form-grid" style="margin-top:8px;">
+        <div class="form-group">
+          <label for="smtpUser">Gmail Address</label>
+          <input type="email" id="smtpUser" placeholder="you@gmail.com">
+        </div>
+        <div class="form-group">
+          <label for="smtpPass">App Password</label>
+          <input type="password" id="smtpPass" placeholder="16-character app password">
+        </div>
+        <div class="form-group full">
+          <label for="adminEmail">Notification Email</label>
+          <input type="email" id="adminEmail" placeholder="Where to send notifications">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save SMTP Settings</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <footer class="footer">C2S Mentee Management System &middot; Frontend Prototype</footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
