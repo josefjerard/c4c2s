@@ -521,7 +521,7 @@
           '<tbody>' + menteeRows + '</tbody></table></div>'
         : '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);padding:16px 20px;color:var(--text-muted);">No mentees assigned.</div>';
 
-      return '<div class="admin-group" style="margin-bottom:24px;">' +
+      return '<div class="table-wrap admin-group" style="margin-bottom:16px;">' +
         '<div class="admin-mentor" data-mentor="' + esc(mn.username) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
         '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span><div class="mentee-sub">@' + esc(mn.username) + '</div></div>' +
         '<div><div class="info-label">Email</div><div class="info-value">' + esc(mn.email) + '</div></div>' +
