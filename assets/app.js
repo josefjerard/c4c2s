@@ -21,7 +21,7 @@
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       var list = raw ? JSON.parse(raw) : [];
-      if (Array.isArray(list)) return list;
+      if (Array.isArray(list) && list.length > 0) return list;
     } catch (e) {}
     var seeded = SAMPLE_MENTEES.map(function (m, i) {
       return Object.assign({}, m, { id: 'sample' + (i + 1), createdAt: new Date().toISOString(), mentor: 'admin' });
