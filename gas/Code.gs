@@ -45,6 +45,8 @@ function doGet(e) {
         if (all[i].id === id) { found = all[i]; break; }
       }
       output = { success: true, data: found };
+    } else if (action === 'diag') {
+      output = { success: true, data: diag_() };
     } else {
       output = { success: false, error: 'Unknown action: ' + action };
     }
@@ -181,4 +183,21 @@ function deleteMenteeRow_(id) {
 
 function generateId_() {
   return 'm' + new Date().getTime().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function diag_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) return { error: 'No active spreadsheet. Script may not be bound to a spreadsheet.' };
+  var info = {
+    spreadsheetId: ss.getId(),
+    spreadsheetName: ss.getName(),
+    sheets: []
+  };
+  ss.getSheets().forEach(function (s) {
+    info.sheets.push({
+      name: s.getName(),
+      lastRow: s.getLastRow()
+    });
+  });
+  return info;
 }
