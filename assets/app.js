@@ -451,7 +451,7 @@
     var tableEl = document.getElementById('adminTableContainer');
     if (!statsEl || !tableEl) return;
 
-    var mentors = getMentors();
+    var mentors = getMentors().filter(function (mn) { return mn.username !== 'admin'; });
     var mentees = getMentees();
     var totalMentees = mentees.length;
     var totalMembers = mentors.length + totalMentees;
@@ -467,33 +467,14 @@
     }
 
     var html = mentors.map(function (mn) {
-      var own = mentees.filter(function (m) { return m.mentor === mn.username; });
-      var count = own.length;
-
-      var menteeRows = own.length === 0
-        ? '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No mentees assigned</td></tr>'
-        : own.map(function (m) {
-            return '<tr>' +
-              '<td><div class="mentee-name">' + esc(m.name) + '</div></td>' +
-              '<td><span class="badge ' + statusBadgeClass(m.status) + '"><span class="badge-dot"></span>' + esc(m.status) + '</span></td>' +
-              '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
-              '<td style="max-width:280px;">' + esc(m.remarks || '—') + '</td>' +
-              '</tr>';
-          }).join('');
-
-      var menteeTable = own.length
-        ? '<div style="margin:0 16px 16px;overflow:hidden;border:1px solid var(--border);border-radius:var(--radius-sm);">' +
-          '<table><thead><tr><th>Mentee</th><th>Status</th><th>Potential Mentor</th><th>Remarks</th></tr></thead>' +
-          '<tbody>' + menteeRows + '</tbody></table></div>'
-        : '<div style="margin:0 16px 16px;color:var(--text-muted);font-size:0.9rem;">No mentees assigned.</div>';
-
+      var count = mentees.filter(function (m) { return m.mentor === mn.username; }).length;
       return '<div class="table-wrap" style="margin-bottom:24px;">' +
-        '<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;border-bottom:1px solid var(--border);background:var(--surface-alt);">' +
+        '<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;">' +
         '<div style="flex:1;min-width:180px;"><div class="mentee-name">' + esc(mn.name) + '</div><div class="mentee-sub">@' + esc(mn.username) + '</div></div>' +
         '<div><div class="info-label">Email</div><div class="info-value">' + esc(mn.email) + '</div></div>' +
         '<div><div class="info-label">Password</div><div class="info-value">' + esc(mn.password || '—') + '</div></div>' +
         '<div><div class="info-label">Mentees</div><div><span class="badge badge-neutral">' + count + '</span></div></div>' +
-        '</div>' + menteeTable + '</div>';
+        '</div></div>';
     }).join('');
 
     tableEl.innerHTML = html;
