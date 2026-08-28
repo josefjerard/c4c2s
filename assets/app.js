@@ -536,20 +536,10 @@
     tableEl.querySelectorAll('.admin-group').forEach(function (group) {
       var block = group.querySelector('.admin-mentees');
       var caret = group.querySelector('.admin-caret');
-
-      function expand() {
-        block.style.display = '';
-        caret.innerHTML = '&#9652;';
-      }
-      function collapse() {
-        block.style.display = 'none';
-        caret.innerHTML = '&#9662;';
-      }
-
-      group.addEventListener('mouseenter', expand);
-      group.addEventListener('mouseleave', collapse);
       group.querySelector('.admin-mentor').addEventListener('click', function () {
-        if (block.style.display === 'none') expand(); else collapse();
+        var isHidden = block.style.display === 'none';
+        block.style.display = isHidden ? '' : 'none';
+        caret.innerHTML = isHidden ? '&#9652;' : '&#9662;';
       });
     });
   }
