@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Settings - C2S Mentee Management</title>
+  <script>
+    if (!localStorage.getItem('c2s_session')) {
+      window.location.replace('login.html');
+    }
+  </script>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
