@@ -511,8 +511,23 @@
 
       var form = document.getElementById('accountForm');
       if (form) {
+        var saveBtn = form.querySelector('button[type="submit"]');
+
+        function setSaving(saving) {
+          if (!saveBtn) return;
+          if (saving) {
+            saveBtn.dataset.originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
+          } else {
+            if (saveBtn.dataset.originalText) saveBtn.textContent = saveBtn.dataset.originalText;
+            saveBtn.disabled = false;
+          }
+        }
+
         form.addEventListener('submit', function (e) {
           e.preventDefault();
+          if (saveBtn && saveBtn.disabled) return;
 
           var currentPass = document.getElementById('acctCurrentPass').value;
           var newName = nameEl.value.trim();
@@ -531,17 +546,19 @@
             if (newPass !== confirmPass) { flash('New passwords do not match.', 'danger'); return; }
           }
 
+          setSaving(true);
+
           loadMentorsForAuth(function () {
             var idx = indexOfMentorByUsername(user.workerID);
-            if (idx === -1) { flash('Account not found. Please sign out and sign in again.', 'danger'); return; }
+            if (idx === -1) { setSaving(false); flash('Account not found. Please sign out and sign in again.', 'danger'); return; }
             var mentor = _mentors[idx];
 
-            if (mentor.password !== currentPass) { flash('Current password is incorrect.', 'danger'); return; }
+            if (mentor.password !== currentPass) { setSaving(false); flash('Current password is incorrect.', 'danger'); return; }
 
             var isTaken = _mentors.some(function (m) {
               return m !== mentor && (String(m.workerID).toLowerCase() === newWorkerID.toLowerCase());
             });
-            if (isTaken) { flash('That Worker ID is already in use.', 'danger'); return; }
+            if (isTaken) { setSaving(false); flash('That Worker ID is already in use.', 'danger'); return; }
 
             var oldWorkerID = mentor.workerID;
             var updatedMentor = {
@@ -572,6 +589,7 @@
               } }).catch(function () {});
             }
 
+            setSaving(false);
             flash('Account updated successfully.', 'success');
           });
         });
