@@ -14,7 +14,7 @@ GitHub Pages: https://josefjerard.github.io/c4c2s/
 - **Add / Edit mentee** (`create.html`, `edit.html`) — full mentee form.
 - **Mentee details** (`view.html`) — view-only detail of a mentee (all fields).
 - **Admin dashboard** (`admin.html`) — overview of registered mentors (Worker ID, email, password) and mentee counts. Mentor accounts are clickable to reveal their mentees; mentee names open in read-only view mode.
-- **Settings** (`settings.html`) — dark/light mode, Gmail SMTP notification settings.
+- **Settings** (`settings.html`) — dark/light mode and account information (edit full name, Worker ID, and password).
 
 ## Authentication
 
@@ -39,7 +39,6 @@ The Apps Script endpoint is configured as `GAS_URL` in `assets/app.js`. Mentors/
 | `c2s_mentees` | All mentees |
 | `c2s_mentors` | Mentor accounts |
 | `c2s_theme` | Theme preference (light/dark) |
-| `c2s_smtp` | Gmail SMTP settings |
 
 ## Project structure
 
@@ -50,7 +49,7 @@ C2S/
 ├── edit.html           Edit mentee form
 ├── view.html           Mentee detail (read-only when accessed from admin)
 ├── admin.html          Admin dashboard (mentor overview)
-├── settings.html       Settings (theme, SMTP)
+├── settings.html       Settings (theme, account info)
 ├── login.html          Login (Worker ID + password)
 ├── register.html       Register mentor account
 ├── data/
@@ -72,8 +71,5 @@ C2S/
 - Contact number: exactly 11 digits starting with `09`
 - Dashboard stats, live search, status filter
 - Admin dashboard: total mentors, total mentees, total members; mentor accounts expandable to show mentees
+- Settings: edit own account information (full name, Worker ID, password); changing Worker ID reassigns the mentor's mentees
 - Dark mode / light mode toggle
-
-## Roadmap (not yet implemented)
-
-- Gmail SMTP email notifications when mentors create/update/delete mentees (partially wired in Settings)

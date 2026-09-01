@@ -49,25 +49,33 @@
       </div>
     </div>
 
-    <div class="settings-card">
-      <h2>Gmail SMTP Notifications</h2>
-      <p class="desc">Enter your Gmail app password to receive email notifications when mentors create, update, or delete mentees.</p>
+    <div class="settings-card" id="accountCard">
+      <h2>Account Information</h2>
+      <p class="desc">Update your full name, Worker ID, or password.</p>
 
-      <form id="smtpForm" class="form-grid" style="margin-top:8px;">
+      <form id="accountForm" class="form-grid" style="margin-top:8px;">
         <div class="form-group">
-          <label for="smtpUser">Gmail Address</label>
-          <input type="email" id="smtpUser" placeholder="you@gmail.com">
+          <label for="acctName">Full Name</label>
+          <input type="text" id="acctName" autocomplete="name">
         </div>
         <div class="form-group">
-          <label for="smtpPass">App Password</label>
-          <input type="password" id="smtpPass" placeholder="16-character app password">
+          <label for="acctWorkerID">Worker ID</label>
+          <input type="text" id="acctWorkerID" autocomplete="username">
         </div>
-        <div class="form-group full">
-          <label for="adminEmail">Notification Email</label>
-          <input type="email" id="adminEmail" placeholder="Where to send notifications">
+        <div class="form-group">
+          <label for="acctCurrentPass">Current Password</label>
+          <input type="password" id="acctCurrentPass" placeholder="Required to save changes" autocomplete="current-password">
+        </div>
+        <div class="form-group">
+          <label for="acctNewPass">New Password</label>
+          <input type="password" id="acctNewPass" placeholder="Leave blank to keep current" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label for="acctConfirmPass">Confirm New Password</label>
+          <input type="password" id="acctConfirmPass" placeholder="Re-enter new password" autocomplete="new-password">
         </div>
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary">Save SMTP Settings</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
         </div>
       </form>
     </div>

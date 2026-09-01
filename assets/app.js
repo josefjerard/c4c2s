@@ -463,6 +463,90 @@
         flash('Theme updated.', 'success');
       });
     }
+
+    var accountCard = document.getElementById('accountCard');
+    if (accountCard) {
+      var user = getSessionUser();
+      var isAdminUser = user && user.workerID === 'admin';
+
+      if (isAdminUser) {
+        accountCard.style.display = 'none';
+        return;
+      }
+
+      var nameEl = document.getElementById('acctName');
+      var workerIDEl = document.getElementById('acctWorkerID');
+      if (user) {
+        if (nameEl) nameEl.value = user.name || '';
+        if (workerIDEl) workerIDEl.value = user.workerID || '';
+      }
+
+      var form = document.getElementById('accountForm');
+      if (form) {
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+
+          var currentPass = document.getElementById('acctCurrentPass').value;
+          var newName = nameEl.value.trim();
+          var newWorkerID = workerIDEl.value.trim();
+          var newPass = document.getElementById('acctNewPass').value;
+          var confirmPass = document.getElementById('acctConfirmPass').value;
+
+          if (!currentPass) { flash('Enter your current password to save changes.', 'danger'); return; }
+          if (!newName) { flash('Full name is required.', 'danger'); return; }
+          if (!newWorkerID) { flash('Worker ID is required.', 'danger'); return; }
+          if (newWorkerID.toLowerCase() === 'admin') { flash('That Worker ID is reserved.', 'danger'); return; }
+          if (newPass || confirmPass) {
+            if (newPass.length < 8) { flash('New password must be at least 8 characters.', 'danger'); return; }
+            if (newPass !== confirmPass) { flash('New passwords do not match.', 'danger'); return; }
+          }
+
+          loadMentorsForAuth(function () {
+            var idx = indexOfMentorByUsername(user.workerID);
+            if (idx === -1) { flash('Account not found. Please sign out and sign in again.', 'danger'); return; }
+            var mentor = _mentors[idx];
+
+            if (mentor.password !== currentPass) { flash('Current password is incorrect.', 'danger'); return; }
+
+            var isTaken = _mentors.some(function (m) {
+              return m !== mentor && (String(m.workerID).toLowerCase() === newWorkerID.toLowerCase());
+            });
+            if (isTaken) { flash('That Worker ID is already in use.', 'danger'); return; }
+
+            var oldWorkerID = mentor.workerID;
+            var updatedMentor = {
+              workerID: newWorkerID,
+              name: newName,
+              email: mentor.email || '',
+              password: newPass ? newPass : mentor.password
+            };
+            _mentors[idx] = updatedMentor;
+
+            if (newWorkerID !== oldWorkerID) {
+              _mentees = _mentees.map(function (m) {
+                if (m.mentor === oldWorkerID) { m.mentor = newWorkerID; }
+                return m;
+              });
+            }
+
+            saveCachedMentors(_mentors);
+            setSessionUser(updatedMentor, null);
+
+            if (GAS_URL) {
+              apiPost('updateMentor', { data: {
+                oldWorkerID: oldWorkerID,
+                workerID: newWorkerID,
+                name: newName,
+                email: mentor.email || '',
+                password: updatedMentor.password
+              } }).catch(function () {});
+            }
+
+            flash('Account updated successfully.', 'success');
+          });
+        });
+      }
+    }
   }
 
   /* ---------- Admin dashboard ---------- */

@@ -88,6 +88,11 @@ function doPost(e) {
       appendRow_(MENTORS_SHEET, ['workerID', 'name', 'email', 'password'], newMentor);
       output = { success: true, data: newMentor };
 
+    } else if (action === 'updateMentor') {
+      var upData = body.data;
+      updateMentorRow_(upData);
+      output = { success: true, data: upData };
+
     } else {
       output = { success: false, error: 'Unknown action: ' + action };
     }
@@ -138,6 +143,50 @@ function appendRow_(sheetName, headers, data) {
   }
   var row = headers.map(function (h) { return data[h] || ''; });
   sheet.appendRow(row);
+}
+
+function updateMentorRow_(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(MENTORS_SHEET);
+  if (!sheet) return;
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var headers = values[0];
+  var idCol = headers.indexOf('workerID');
+  if (idCol === -1) return;
+  for (var i = 1; i < values.length; i++) {
+    if (String(values[i][idCol]) === String(data.oldWorkerID)) {
+      var rowIndex = i + 1;
+      var newWorkerID = data.workerID || data.oldWorkerID;
+      sheet.getRange(rowIndex, idCol + 1).setValue(newWorkerID);
+      var nameCol = headers.indexOf('name');
+      if (nameCol !== -1) sheet.getRange(rowIndex, nameCol + 1).setValue(data.name || '');
+      var emailCol = headers.indexOf('email');
+      if (emailCol !== -1) sheet.getRange(rowIndex, emailCol + 1).setValue(data.email || '');
+      var passCol = headers.indexOf('password');
+      if (passCol !== -1) sheet.getRange(rowIndex, passCol + 1).setValue(data.password || '');
+
+      reassignMenteesTo_(data.oldWorkerID, newWorkerID);
+      break;
+    }
+  }
+}
+
+function reassignMenteesTo_(oldWorkerID, newWorkerID) {
+  if (oldWorkerID === newWorkerID) return;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(MENTEES_SHEET);
+  if (!sheet) return;
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var headers = values[0];
+  var mentorCol = headers.indexOf('mentor');
+  if (mentorCol === -1) return;
+  for (var i = 1; i < values.length; i++) {
+    if (String(values[i][mentorCol]) === String(oldWorkerID)) {
+      sheet.getRange(i + 1, mentorCol + 1).setValue(newWorkerID);
+    }
+  }
 }
 
 function updateMenteeRow_(data) {
