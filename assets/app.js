@@ -573,7 +573,7 @@
       }
 
       var html = mentors.map(function (mn) {
-        var own = mentees.filter(function (m) { return m.mentor === mn.workerID; });
+        var own = mentees.filter(function (m) { return String(m.mentor || '').trim() === String(mn.workerID || '').trim(); });
         var count = own.length;
 
         var menteeRows = own.length === 0
