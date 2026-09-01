@@ -182,6 +182,36 @@
     setTimeout(function () { box.innerHTML = ''; }, 3600);
   }
 
+  function setFormBusy(form, busy, busyText) {
+    if (!form) return;
+    var btn = form.querySelector('button[type="submit"]');
+    if (!btn) return;
+    if (busy) {
+      btn.dataset.originalText = btn.textContent;
+      btn.textContent = busyText || 'Saving...';
+      btn.disabled = true;
+    } else {
+      if (btn.dataset.originalText) btn.textContent = btn.dataset.originalText;
+      btn.disabled = false;
+    }
+  }
+
+  function setFormBusyAndRun(form, busyText, fn) {
+    if (form.dataset.busy) return;
+    form.dataset.busy = '1';
+    setFormBusy(form, true, busyText);
+    var done = function () {
+      form.dataset.busy = '';
+      setFormBusy(form, false);
+    };
+    try {
+      fn(done);
+    } catch (err) {
+      done();
+      throw err;
+    }
+  }
+
   function formatDate(iso) {
     if (!iso) return '\u2014';
     var d = new Date(iso + 'T00:00:00');
@@ -367,25 +397,31 @@
         remarks: document.getElementById('remarks').value.trim()
       };
 
-      if (editId) {
-        data.id = editId;
-        data.mentor = (getMenteeById(editId) || {}).mentor || '';
-        updateMentee(data).then(function () {
-          flash('Mentee updated successfully.', 'success');
-          setTimeout(function () { window.location.href = 'view.html?id=' + encodeURIComponent(editId); }, 600);
-        }).catch(function (err) {
-          flash('Failed to update: ' + err.message, 'danger');
-        });
-      } else {
-        var currentUser = getSessionUser();
-        data.mentor = currentUser ? String(currentUser.workerID || '') : '';
-        addMentee(data).then(function () {
-          flash('Mentee added successfully.', 'success');
-          setTimeout(function () { window.location.href = 'index.html'; }, 600);
-        }).catch(function (err) {
-          flash('Failed to add: ' + err.message, 'danger');
-        });
-      }
+      setFormBusyAndRun(form, 'Saving...', function (done) {
+        if (editId) {
+          data.id = editId;
+          data.mentor = (getMenteeById(editId) || {}).mentor || '';
+          updateMentee(data).then(function () {
+            done();
+            flash('Mentee updated successfully.', 'success');
+            setTimeout(function () { window.location.href = 'view.html?id=' + encodeURIComponent(editId); }, 600);
+          }).catch(function (err) {
+            done();
+            flash('Failed to update: ' + err.message, 'danger');
+          });
+        } else {
+          var currentUser = getSessionUser();
+          data.mentor = currentUser ? String(currentUser.workerID || '') : '';
+          addMentee(data).then(function () {
+            done();
+            flash('Mentee added successfully.', 'success');
+            setTimeout(function () { window.location.href = 'index.html'; }, 600);
+          }).catch(function (err) {
+            done();
+            flash('Failed to add: ' + err.message, 'danger');
+          });
+        }
+      });
     });
   }
 
@@ -950,22 +986,24 @@
           return;
         }
 
-        loadMentorsForAuth(function () {
-          var idx = indexOfMentorByUsername(username);
-          if (idx === -1) {
-            fetchMentors().then(function () {
-              _mentors = mergeMentors(_mentors);
-              var idx2 = indexOfMentorByUsername(username);
-              if (idx2 === -1) { flash('No account found with that Worker ID.', 'danger'); return; }
-              if (_mentors[idx2].password !== password) { flash('Incorrect password.', 'danger'); return; }
-              var m2 = _mentors[idx2];
-              setSessionUser({ workerID: m2.workerID, name: m2.name, gender: m2.gender || '' }, 'index.html');
-            });
-            return;
-          }
-          if (_mentors[idx].password !== password) { flash('Incorrect password.', 'danger'); return; }
-          var m = _mentors[idx];
-          setSessionUser({ workerID: m.workerID, name: m.name, gender: m.gender || '' }, 'index.html');
+        setFormBusyAndRun(loginForm, 'Signing in...', function (done) {
+          loadMentorsForAuth(function () {
+            var idx = indexOfMentorByUsername(username);
+            if (idx === -1) {
+              fetchMentors().then(function () {
+                _mentors = mergeMentors(_mentors);
+                var idx2 = indexOfMentorByUsername(username);
+                if (idx2 === -1) { done(); flash('No account found with that Worker ID.', 'danger'); return; }
+                if (_mentors[idx2].password !== password) { done(); flash('Incorrect password.', 'danger'); return; }
+                var m2 = _mentors[idx2];
+                setSessionUser({ workerID: m2.workerID, name: m2.name, gender: m2.gender || '' }, 'index.html');
+              });
+              return;
+            }
+            if (_mentors[idx].password !== password) { done(); flash('Incorrect password.', 'danger'); return; }
+            var m = _mentors[idx];
+            setSessionUser({ workerID: m.workerID, name: m.name, gender: m.gender || '' }, 'index.html');
+          });
         });
       });
     }
@@ -987,26 +1025,31 @@
         if (password.length < 8) { flash('Password must be at least 8 characters.', 'danger'); return; }
         if (password !== confirm) { flash('Passwords do not match.', 'danger'); return; }
 
-        loadMentorsForAuth(function () {
-          var idx = indexOfMentorByUsername(username);
-          if (idx !== -1) { flash('That Worker ID is already registered.', 'danger'); return; }
+        setFormBusyAndRun(registerForm, 'Creating...', function (done) {
+          loadMentorsForAuth(function () {
+            var idx = indexOfMentorByUsername(username);
+            if (idx !== -1) { done(); flash('That Worker ID is already registered.', 'danger'); return; }
 
-          var newMentor = { workerID: username, name: name, gender: gender, password: password };
-          _mentors.push(newMentor);
-          saveCachedMentors(_mentors);
+            var newMentor = { workerID: username, name: name, gender: gender, password: password };
+            _mentors.push(newMentor);
+            saveCachedMentors(_mentors);
 
-          if (GAS_URL) {
-            apiPost('addMentor', { data: { workerID: username, name: name, gender: gender, password: password } }).then(function () {
+            if (GAS_URL) {
+              apiPost('addMentor', { data: { workerID: username, name: name, gender: gender, password: password } }).then(function () {
+                done();
+                flash('Account created successfully. Please sign in.', 'success');
+                setTimeout(function () { window.location.href = 'login.html'; }, 600);
+              }).catch(function () {
+                done();
+                flash('Account created. Please sign in.', 'success');
+                setTimeout(function () { window.location.href = 'login.html'; }, 600);
+              });
+            } else {
+              done();
               flash('Account created successfully. Please sign in.', 'success');
               setTimeout(function () { window.location.href = 'login.html'; }, 600);
-            }).catch(function () {
-              flash('Account created. Please sign in.', 'success');
-              setTimeout(function () { window.location.href = 'login.html'; }, 600);
-            });
-          } else {
-            flash('Account created successfully. Please sign in.', 'success');
-            setTimeout(function () { window.location.href = 'login.html'; }, 600);
-          }
+            }
+          });
         });
       });
     }
