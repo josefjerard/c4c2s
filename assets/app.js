@@ -675,7 +675,7 @@
     var cached = getCachedMentors();
     if (cached) {
       cached.forEach(function (c) {
-        var exists = merged.some(function (m) { return m.email === c.email; });
+        var exists = merged.some(function (m) { return String(m.workerID) === String(c.workerID); });
         if (!exists) merged.push(c);
       });
     }
@@ -776,6 +776,7 @@
           var idx = indexOfMentorByUsername(username);
           if (idx === -1) {
             fetchMentors().then(function () {
+              _mentors = mergeMentors(_mentors);
               var idx2 = indexOfMentorByUsername(username);
               if (idx2 === -1) { flash('No account found with that Worker ID.', 'danger'); return; }
               if (_mentors[idx2].password !== password) { flash('Incorrect password.', 'danger'); return; }
