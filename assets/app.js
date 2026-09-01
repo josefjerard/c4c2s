@@ -232,7 +232,7 @@
 
     var rows = mentees.map(function (m) {
       return '<tr>' +
-        '<td><div class="mentee-name">' + esc(m.name) + '</div><div class="mentee-sub">' + esc(m.contact || 'No contact') + '</div></td>' +
+        '<td><div class="mentee-name">' + esc(m.name) + '</div></td>' +
         '<td><span class="badge ' + statusBadgeClass(m.status) + '"><span class="badge-dot"></span>' + esc(m.status) + '</span></td>' +
         '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
         '<td style="max-width:260px;">' + esc(m.remarks || '\u2014') + '</td>' +
