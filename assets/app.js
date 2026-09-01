@@ -313,7 +313,7 @@
           : (existing.moduleLesson || existing.module || '');
         setSelectValue(document.getElementById('moduleLesson'), existingModuleVal);
         document.getElementById('potentialMentor').value = existing.potentialMentor || 'No';
-        document.getElementById('c2s101').value = existing.c2s101 || 'Lesson 1';
+        document.getElementById('c2s101').value = existing.c2s101 || 'Not yet taken';
         document.getElementById('otherTrainings').value = existing.otherTrainings || '';
         document.getElementById('remarks').value = existing.remarks || '';
         updateAge();
@@ -467,7 +467,7 @@
     var accountCard = document.getElementById('accountCard');
     if (accountCard) {
       var user = getSessionUser();
-      var isAdminUser = user && user.workerID === 'admin';
+      var isAdminUser = user && String(user.workerID) === ADMIN_STAFF_ID;
 
       if (isAdminUser) {
         accountCard.style.display = 'none';
@@ -495,7 +495,7 @@
           if (!currentPass) { flash('Enter your current password to save changes.', 'danger'); return; }
           if (!newName) { flash('Full name is required.', 'danger'); return; }
           if (!newWorkerID) { flash('Worker ID is required.', 'danger'); return; }
-          if (newWorkerID.toLowerCase() === 'admin') { flash('That Worker ID is reserved.', 'danger'); return; }
+          if (newWorkerID.toLowerCase() === 'admin' || newWorkerID === ADMIN_STAFF_ID) { flash('That Worker ID is reserved.', 'danger'); return; }
           if (newPass || confirmPass) {
             if (newPass.length < 8) { flash('New password must be at least 8 characters.', 'danger'); return; }
             if (newPass !== confirmPass) { flash('New passwords do not match.', 'danger'); return; }
@@ -557,7 +557,7 @@
     showLoading(tableEl);
 
     Promise.all([fetchMentors(), fetchMentees()]).then(function () {
-      var mentors = getMentors().filter(function (mn) { return mn.workerID !== 'admin'; });
+      var mentors = getMentors().filter(function (mn) { return mn.workerID !== ADMIN_STAFF_ID; });
       var mentees = getMentees();
       var totalMentees = mentees.length;
       var totalMembers = mentors.length + totalMentees;
@@ -619,11 +619,11 @@
 
   /* ---------- Authentication ---------- */
 
-  var ADMIN_EMAIL = 'admin@c2s.local';
+  var ADMIN_STAFF_ID = '1990';
   var ADMIN_PASSWORD = 'admin123';
   var MENTORS_CACHE_KEY = 'c2s_mentors_cache';
 
-  var DEFAULT_ADMIN = { workerID: 'admin', name: 'Administrator', email: ADMIN_EMAIL, password: ADMIN_PASSWORD };
+  var DEFAULT_ADMIN = { workerID: ADMIN_STAFF_ID, name: 'Administrator', password: ADMIN_PASSWORD };
 
   function getSessionUser() {
     try {
@@ -644,7 +644,7 @@
   }
 
   function isAdmin(user) {
-    return user && user.email === ADMIN_EMAIL;
+    return user && String(user.workerID) === ADMIN_STAFF_ID;
   }
 
   function indexOfMentorByUsername(username) {
@@ -679,7 +679,7 @@
         if (!exists) merged.push(c);
       });
     }
-    if (!merged.some(function (m) { return m.email === ADMIN_EMAIL; })) {
+    if (!merged.some(function (m) { return String(m.workerID) === ADMIN_STAFF_ID; })) {
       merged.unshift(DEFAULT_ADMIN);
     }
     saveCachedMentors(merged);
@@ -688,7 +688,7 @@
 
   function loadMentorsForAuth(cb) {
     function done() {
-      if (!_mentors.some(function (m) { return m.email === ADMIN_EMAIL; })) {
+      if (!_mentors.some(function (m) { return String(m.workerID) === ADMIN_STAFF_ID; })) {
         _mentors.unshift(DEFAULT_ADMIN);
       }
       cb();
@@ -728,7 +728,7 @@
         links.push('<a href="admin.html">Admin</a>');
       }
       links.push('<a href="settings.html">Settings</a>');
-      links.push('<span class="topbar-user">' + esc(user.name || user.email) + '</span>');
+      links.push('<span class="topbar-user">' + esc(user.name || user.workerID) + '</span>');
       links.push('<a href="#" id="logoutLink" class="btn btn-outline btn-sm">Logout</a>');
     } else {
       links.push('<a href="login.html" class="btn btn-outline btn-sm">Login</a>');
@@ -767,8 +767,8 @@
 
         if (!username || !password) { flash('Please enter your Worker ID and password.', 'danger'); return; }
 
-        if (username.toLowerCase() === 'admin' && password === ADMIN_PASSWORD) {
-          setSessionUser({ workerID: 'admin', name: 'Administrator', email: ADMIN_EMAIL }, 'admin.html');
+        if (username === ADMIN_STAFF_ID && password === ADMIN_PASSWORD) {
+          setSessionUser({ workerID: ADMIN_STAFF_ID, name: 'Administrator' }, 'admin.html');
           return;
         }
 
@@ -802,7 +802,7 @@
 
         if (!name) { flash('Full name is required.', 'danger'); return; }
         if (!username) { flash('Worker ID is required.', 'danger'); return; }
-        if (username.toLowerCase() === 'admin') { flash('That Worker ID is reserved.', 'danger'); return; }
+        if (username.toLowerCase() === 'admin' || username === ADMIN_STAFF_ID) { flash('That Worker ID is reserved.', 'danger'); return; }
         if (password.length < 8) { flash('Password must be at least 8 characters.', 'danger'); return; }
         if (password !== confirm) { flash('Passwords do not match.', 'danger'); return; }
 

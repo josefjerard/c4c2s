@@ -8,7 +8,7 @@ GitHub Pages: https://josefjerard.github.io/c4c2s/
 
 ## Pages
 
-- **Login** (`login.html`) — mentors sign in with their Worker ID and password. `admin` / password opens the admin dashboard.
+- **Login** (`login.html`) — mentors sign in with their Worker ID and password. Worker ID `1990` / password opens the admin dashboard.
 - **Register** (`register.html`) — create a mentor account (Full Name, Worker ID, Password, Confirm Password). Worker ID must be unique.
 - **Mentor app** (`index.html`) — the per-mentor mentee workspace: dashboard stats, live search, status filter, mentee table (name, status, potential mentor, remarks).
 - **Add / Edit mentee** (`create.html`, `edit.html`) — full mentee form.
@@ -20,7 +20,7 @@ GitHub Pages: https://josefjerard.github.io/c4c2s/
 
 - Login requires a **Worker ID** and **password**.
 - Registration requires **Full Name**, **Worker ID**, **Password** (min 8 chars), and **Confirm Password**.
-- The `admin` account is reserved and only used to access the admin dashboard.
+- The admin account (Worker ID `1990`) is reserved, separate from normal mentors, and only used to access the admin dashboard.
 - Mentors are cached in `localStorage` so login works even if the Apps Script backend is temporarily unreachable.
 
 ## Data storage
