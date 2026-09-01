@@ -627,6 +627,7 @@
 
             setSaving(false);
             flash('Account updated successfully.', 'success');
+            setTimeout(function () { window.location.reload(); }, 700);
           });
         });
       }
