@@ -21,6 +21,7 @@
 
 var MENTEES_SHEET = 'Mentees';
 var MENTORS_SHEET = 'Mentors';
+var SETTINGS_SHEET = 'Settings';
 
 var MENTEE_HEADERS = [
   'id', 'name', 'status', 'contact', 'birthday', 'address',
@@ -46,6 +47,8 @@ function doGet(e) {
         if (all[i].id === id) { found = all[i]; break; }
       }
       output = { success: true, data: found };
+    } else if (action === 'getSettings') {
+      output = { success: true, data: getSettings_() };
     } else if (action === 'diag') {
       output = { success: true, data: diag_() };
     } else {
@@ -72,11 +75,24 @@ function doPost(e) {
       newMentee.createdAt = newMentee.createdAt || new Date().toISOString();
       appendRow_(MENTEES_SHEET, MENTEE_HEADERS, newMentee);
       output = { success: true, data: newMentee };
+      sendNotification_(
+        'New mentee added',
+        'A mentee was added to the system by mentor "' + (newMentee.mentor || 'Unknown') + '".\n\n' +
+          'Name: ' + newMentee.name + '\n' +
+          'Status: ' + newMentee.status + '\n' +
+          'Mentor: ' + newMentee.mentor
+      );
 
     } else if (action === 'updateMentee') {
       var updateData = body.data;
       var updated = updateMenteeRow_(updateData);
       output = { success: true, data: updated };
+      sendNotification_(
+        'Mentee updated',
+        'A mentee was updated by mentor "' + (updateData.mentor || 'Unknown') + '".\n\n' +
+          'Name: ' + (updated ? updated.name : updateData.name) + '\n' +
+          'Status: ' + (updated ? updated.status : updateData.status)
+      );
 
     } else if (action === 'deleteMentee') {
       var delId = body.id;
@@ -87,11 +103,34 @@ function doPost(e) {
       var newMentor = body.data;
       appendRow_(MENTORS_SHEET, ['workerID', 'name', 'gender', 'password'], newMentor);
       output = { success: true, data: newMentor };
+      sendNotification_(
+        'New mentor registered',
+        'A new mentor registered an account.\n\n' +
+          'Name: ' + newMentor.name + '\n' +
+          'Gender: ' + newMentor.gender + '\n' +
+          'Worker ID: ' + newMentor.workerID
+      );
 
     } else if (action === 'updateMentor') {
       var upData = body.data;
       updateMentorRow_(upData);
       output = { success: true, data: upData };
+      sendNotification_(
+        'Mentor account updated',
+        'A mentor updated their account information.\n\n' +
+          'Previous Worker ID: ' + upData.oldWorkerID + '\n' +
+          'Worker ID: ' + upData.workerID + '\n' +
+          'Name: ' + upData.name + '\n' +
+          'Gender: ' + upData.gender
+      );
+
+    } else if (action === 'saveSettings') {
+      saveSettings_(body.data || {});
+      output = { success: true, data: getSettings_() };
+
+    } else if (action === 'testEmail') {
+      sendNotification_('C2S Test Email', 'This is a test notification from the C2S Mentee Management System. Your email settings are working correctly.');
+      output = { success: true };
 
     } else {
       output = { success: false, error: 'Unknown action: ' + action };
@@ -233,6 +272,90 @@ function deleteMenteeRow_(id) {
 
 function generateId_() {
   return 'm' + new Date().getTime().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+/* ---------- Email notification settings ---------- */
+
+var DEFAULT_SETTINGS = {
+  notifyEmail: '',
+  notifyOnMentorRegister: 'true',
+  notifyOnMentorUpdate: 'true',
+  notifyOnMenteeAdd: 'true',
+  notifyOnMenteeUpdate: 'true'
+};
+
+function ensureSettingsSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SETTINGS_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(SETTINGS_SHEET);
+    sheet.appendRow(['key', 'value']);
+  }
+  return sheet;
+}
+
+function getSettings_() {
+  var settings = {};
+  var keys = Object.keys(DEFAULT_SETTINGS);
+  for (var i = 0; i < keys.length; i++) settings[keys[i]] = DEFAULT_SETTINGS[keys[i]];
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SETTINGS_SHEET);
+  if (!sheet) return settings;
+
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  if (values.length <= 1) return settings;
+  for (var r = 1; r < values.length; r++) {
+    var key = String(values[r][0]);
+    if (settings.hasOwnProperty(key)) settings[key] = values[r][1] != null ? String(values[r][1]) : '';
+  }
+  return settings;
+}
+
+function saveSettings_(data) {
+  var sheet = ensureSettingsSheet_();
+  var keys = Object.keys(DEFAULT_SETTINGS);
+  var range = sheet.getDataRange();
+  var values = range.getValues();
+  var newRows = [];
+
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    var hasValue = data.hasOwnProperty(key);
+    var newVal = hasValue ? String(data[key]) : DEFAULT_SETTINGS[key];
+    var found = false;
+    for (var r = 1; r < values.length; r++) {
+      if (String(values[r][0]) === key) {
+        sheet.getRange(r + 1, 2).setValue(newVal);
+        found = true;
+        break;
+      }
+    }
+    if (!found) newRows.push([key, newVal]);
+  }
+  if (newRows.length) sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, 2).setValues(newRows);
+}
+
+function sendNotification_(subject, body) {
+  try {
+    var settings = getSettings_();
+    var to = String(settings.notifyEmail || '').trim();
+    if (!to) return;
+    var isOn = function (k) { return String(settings[k] || 'true') !== 'false'; };
+
+    if (subject.indexOf('test') === -1) {
+      if (/New mentor registered/.test(subject) && !isOn('notifyOnMentorRegister')) return;
+      if (/Mentor account updated/.test(subject) && !isOn('notifyOnMentorUpdate')) return;
+      if (/New mentee added/.test(subject) && !isOn('notifyOnMenteeAdd')) return;
+      if (/Mentee updated/.test(subject) && !isOn('notifyOnMenteeUpdate')) return;
+    }
+
+    var fullSubject = '[C2S] ' + subject;
+    MailApp.sendEmail(to, fullSubject, body);
+  } catch (err) {
+    Logger.log('Notification error: ' + err.message);
+  }
 }
 
 function diag_() {

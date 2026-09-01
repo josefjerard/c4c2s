@@ -12,6 +12,23 @@
 
   /* ---------- Data layer (Google Sheets via Apps Script) ---------- */
 
+  function fetchWithTimeout(url, options, ms) {
+    options = options || {};
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    if (controller) options.signal = controller.signal;
+    var timeout = setTimeout(function () {
+      if (controller) controller.abort();
+    }, ms || 20000);
+    return fetch(url, options).then(function (res) {
+      clearTimeout(timeout);
+      return res;
+    }).catch(function (err) {
+      clearTimeout(timeout);
+      if (controller && controller.signal.aborted) throw new Error('Request timed out. Please try again.');
+      throw err;
+    });
+  }
+
   function apiGet(action, params) {
     var url = GAS_URL + '?action=' + encodeURIComponent(action) + '&_t=' + Date.now();
     if (params) {
@@ -19,7 +36,7 @@
         url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
       });
     }
-    return fetch(url)
+    return fetchWithTimeout(url, null, 20000)
       .then(function (r) { return r.json(); })
       .then(function (res) {
         if (!res.success) throw new Error(res.error || 'API error');
@@ -28,12 +45,12 @@
   }
 
   function apiPost(action, body) {
-    return fetch(GAS_URL, {
+    return fetchWithTimeout(GAS_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(Object.assign({ action: action }, body))
-    })
+    }, 20000)
       .then(function (r) {
         if (r && r.type === 'opaque') return { success: true, data: null };
         return r.json();
@@ -392,9 +409,9 @@
     var nameEl = document.getElementById('detailName');
     if (!nameEl) return;
 
-    showLoading(document.getElementById('detailContent'));
+    apiGet('getMentees').then(function (data) {
+      _mentees = Array.isArray(data) ? data : [];
 
-    fetchMentees().then(function () {
       var m = getMenteeById(id);
       if (!m) {
         nameEl.textContent = 'Mentee not found';
@@ -445,6 +462,12 @@
           handleDelete(m.id);
         });
       }
+    }).catch(function (err) {
+      nameEl.textContent = 'Unable to load mentee';
+      document.getElementById('detailContent').innerHTML =
+        '<div class="empty-state"><h3>Unable to load mentee details</h3>' +
+        '<p>' + esc(err && err.message ? err.message : 'There was a problem connecting to the server.') + '</p>' +
+        '<a href="index.html" class="btn btn-outline">&larr; Back to Dashboard</a></div>';
     });
   }
 
@@ -675,6 +698,75 @@
         genderCard('GORGEOUS', females.length, 'mentors.html?gender=female', 'active') +
         '</section>';
     });
+  }
+
+  /* ---------- Email notification settings (admin) ---------- */
+
+  function bindEmailSettings() {
+    var card = document.getElementById('emailSettingsCard');
+    var form = document.getElementById('emailSettingsForm');
+    if (!card || !form) return;
+
+    var emailEl = document.getElementById('notifyEmail');
+    var cbRegister = document.getElementById('notifyMentorRegister');
+    var cbUpdate = document.getElementById('notifyMentorUpdate');
+    var cbAdd = document.getElementById('notifyMenteeAdd');
+    var cbMenteeUpdate = document.getElementById('notifyMenteeUpdate');
+    var testBtn = document.getElementById('testEmailBtn');
+
+    function applySettings(s) {
+      s = s || {};
+      if (!s.notifyEmail && !s.notifyOnMentorRegister && !s.notifyOnMentorUpdate &&
+          !s.notifyOnMenteeAdd && !s.notifyOnMenteeUpdate) return;
+      emailEl.value = s.notifyEmail || '';
+      cbRegister.checked = String(s.notifyOnMentorRegister || 'true') !== 'false';
+      cbUpdate.checked = String(s.notifyOnMentorUpdate || 'true') !== 'false';
+      cbAdd.checked = String(s.notifyOnMenteeAdd || 'true') !== 'false';
+      cbMenteeUpdate.checked = String(s.notifyOnMenteeUpdate || 'true') !== 'false';
+    }
+
+    function collectSettings() {
+      return {
+        notifyEmail: emailEl.value.trim(),
+        notifyOnMentorRegister: cbRegister.checked ? 'true' : 'false',
+        notifyOnMentorUpdate: cbUpdate.checked ? 'true' : 'false',
+        notifyOnMenteeAdd: cbAdd.checked ? 'true' : 'false',
+        notifyOnMenteeUpdate: cbMenteeUpdate.checked ? 'true' : 'false'
+      };
+    }
+
+    apiGet('getSettings').then(applySettings).catch(function () {});
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = emailEl.value.trim();
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        flash('Please enter a valid recipient email.', 'danger');
+        return;
+      }
+      var settings = collectSettings();
+      apiPost('saveSettings', { data: settings }).then(function (saved) {
+        applySettings(saved);
+        flash('Email notification settings saved.', 'success');
+      }).catch(function (err) {
+        flash('Failed to save settings: ' + err.message, 'danger');
+      });
+    });
+
+    if (testBtn) {
+      testBtn.addEventListener('click', function () {
+        var email = emailEl.value.trim();
+        if (!email) { flash('Enter a recipient email before sending a test.', 'danger'); return; }
+        testBtn.disabled = true;
+        apiPost('testEmail', { data: collectSettings() }).then(function () {
+          flash('Test email sent.', 'success');
+          testBtn.disabled = false;
+        }).catch(function (err) {
+          flash('Failed to send test email: ' + err.message, 'danger');
+          testBtn.disabled = false;
+        });
+      });
+    }
   }
 
   /* ---------- Authentication ---------- */
@@ -942,6 +1034,7 @@
     }
 
     if (window.ADMIN_MODE) renderAdmin();
+    if (window.ADMIN_MODE) bindEmailSettings();
     if (window.MENTORS_MODE) renderMentorsPage();
 
     bindForm();
