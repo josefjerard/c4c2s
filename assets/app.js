@@ -472,7 +472,7 @@
     showLoading(tableEl);
 
     Promise.all([fetchMentors(), fetchMentees()]).then(function () {
-      var mentors = getMentors().filter(function (mn) { return mn.username !== 'admin'; });
+      var mentors = getMentors().filter(function (mn) { return mn.workerID !== 'admin'; });
       var mentees = getMentees();
       var totalMentees = mentees.length;
       var totalMembers = mentors.length + totalMentees;
@@ -488,7 +488,7 @@
       }
 
       var html = mentors.map(function (mn) {
-        var own = mentees.filter(function (m) { return m.mentor === mn.username; });
+        var own = mentees.filter(function (m) { return m.mentor === mn.workerID; });
         var count = own.length;
 
         var menteeRows = own.length === 0
@@ -509,9 +509,9 @@
           : '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);padding:16px 20px;color:var(--text-muted);">No mentees assigned.</div>';
 
         return '<div class="table-wrap admin-group" style="margin-bottom:16px;">' +
-          '<div class="admin-mentor" data-mentor="' + esc(mn.username) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
-          '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span><div class="mentee-sub">@' + esc(mn.username) + '</div></div>' +
-          '<div><div class="info-label">Email</div><div class="info-value">' + esc(mn.email) + '</div></div>' +
+          '<div class="admin-mentor" data-mentor="' + esc(mn.workerID) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
+          '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span><div class="mentee-sub">@' + esc(mn.workerID) + '</div></div>' +
+          '<div><div class="info-label">Worker ID</div><div class="info-value">' + esc(mn.workerID) + '</div></div>' +
           '<div><div class="info-label">Password</div><div class="info-value">' + esc(mn.password || '\u2014') + '</div></div>' +
           '<div><div class="info-label">Mentees</div><div><span class="badge badge-neutral">' + count + '</span></div></div>' +
           '<div class="admin-caret" style="color:var(--text-muted);">&#9662;</div>' +
@@ -538,7 +538,7 @@
   var ADMIN_PASSWORD = 'admin123';
   var MENTORS_CACHE_KEY = 'c2s_mentors_cache';
 
-  var DEFAULT_ADMIN = { username: 'admin', name: 'Administrator', email: ADMIN_EMAIL, password: ADMIN_PASSWORD };
+  var DEFAULT_ADMIN = { workerID: 'admin', name: 'Administrator', email: ADMIN_EMAIL, password: ADMIN_PASSWORD };
 
   function getSessionUser() {
     try {
@@ -562,10 +562,10 @@
     return user && user.email === ADMIN_EMAIL;
   }
 
-  function indexOfMentorByEmail(email) {
-    if (!email) return -1;
+  function indexOfMentorByUsername(username) {
+    if (!username) return -1;
     for (var i = 0; i < _mentors.length; i++) {
-      if (_mentors[i].email === email) return i;
+      if ((_mentors[i].workerID || '') === username) return i;
     }
     return -1;
   }
@@ -677,31 +677,31 @@
     if (loginForm) {
       loginForm.addEventListener('submit', function (e) {
         e.preventDefault();
-        var email = document.getElementById('loginEmail').value.trim().toLowerCase();
+        var username = document.getElementById('loginUsername').value.trim();
         var password = document.getElementById('loginPassword').value;
 
-        if (!email || !password) { flash('Please enter your email and password.', 'danger'); return; }
+        if (!username || !password) { flash('Please enter your Worker ID and password.', 'danger'); return; }
 
-        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-          setSessionUser({ username: 'admin', name: 'Administrator', email: ADMIN_EMAIL }, 'admin.html');
+        if (username.toLowerCase() === 'admin' && password === ADMIN_PASSWORD) {
+          setSessionUser({ workerID: 'admin', name: 'Administrator', email: ADMIN_EMAIL }, 'admin.html');
           return;
         }
 
         loadMentorsForAuth(function () {
-          var idx = indexOfMentorByEmail(email);
+          var idx = indexOfMentorByUsername(username);
           if (idx === -1) {
             fetchMentors().then(function () {
-              var idx2 = indexOfMentorByEmail(email);
-              if (idx2 === -1) { flash('No account found with that email.', 'danger'); return; }
+              var idx2 = indexOfMentorByUsername(username);
+              if (idx2 === -1) { flash('No account found with that Worker ID.', 'danger'); return; }
               if (_mentors[idx2].password !== password) { flash('Incorrect password.', 'danger'); return; }
               var m2 = _mentors[idx2];
-              setSessionUser({ username: m2.username, name: m2.name, email: m2.email }, 'index.html');
+              setSessionUser({ workerID: m2.workerID, name: m2.name, email: m2.email }, 'index.html');
             });
             return;
           }
           if (_mentors[idx].password !== password) { flash('Incorrect password.', 'danger'); return; }
           var m = _mentors[idx];
-          setSessionUser({ username: m.username, name: m.name, email: m.email }, 'index.html');
+          setSessionUser({ workerID: m.workerID, name: m.name, email: m.email }, 'index.html');
         });
       });
     }
@@ -711,27 +711,26 @@
       registerForm.addEventListener('submit', function (e) {
         e.preventDefault();
         var name = document.getElementById('regName').value.trim();
-        var email = document.getElementById('regEmail').value.trim().toLowerCase();
+        var username = document.getElementById('regUsername').value.trim();
         var password = document.getElementById('regPassword').value;
         var confirm = document.getElementById('regConfirm').value;
 
         if (!name) { flash('Full name is required.', 'danger'); return; }
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { flash('Please enter a valid email address.', 'danger'); return; }
-        if (email === ADMIN_EMAIL) { flash('That email is already registered.', 'danger'); return; }
+        if (!username) { flash('Worker ID is required.', 'danger'); return; }
+        if (username.toLowerCase() === 'admin') { flash('That Worker ID is reserved.', 'danger'); return; }
         if (password.length < 8) { flash('Password must be at least 8 characters.', 'danger'); return; }
         if (password !== confirm) { flash('Passwords do not match.', 'danger'); return; }
 
         loadMentorsForAuth(function () {
-          var idx = indexOfMentorByEmail(email);
-          if (idx !== -1) { flash('That email is already registered.', 'danger'); return; }
+          var idx = indexOfMentorByUsername(username);
+          if (idx !== -1) { flash('That Worker ID is already registered.', 'danger'); return; }
 
-          var username = email.split('@')[0].replace(/[^a-z0-9]/g, '') || ('user' + Date.now().toString(36));
-          var newMentor = { username: username, name: name, email: email, password: password };
+          var newMentor = { workerID: username, name: name, password: password };
           _mentors.push(newMentor);
           saveCachedMentors(_mentors);
 
           if (GAS_URL) {
-            apiPost('addMentor', { data: { username: username, name: name, email: email, password: password } }).then(function () {
+            apiPost('addMentor', { data: { workerID: username, name: name, password: password } }).then(function () {
               flash('Account created successfully. Please sign in.', 'success');
               setTimeout(function () { window.location.href = 'login.html'; }, 600);
             }).catch(function () {
