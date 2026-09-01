@@ -270,8 +270,7 @@
     if (!confirm('Are you sure you want to delete "' + (m.name || 'this mentee') + '"? This cannot be undone.')) return;
     deleteMentee(id).then(function () {
       flash('Mentee deleted successfully.', 'success');
-      renderStats();
-      renderTable();
+      setTimeout(function () { window.location.href = 'index.html'; }, 600);
     }).catch(function (err) {
       flash('Failed to delete: ' + err.message, 'danger');
     });
@@ -495,6 +494,9 @@
 
       if (isAdminUser) {
         accountCard.style.display = 'none';
+        var emailCard = document.getElementById('emailSettingsCard');
+        if (emailCard) emailCard.style.display = '';
+        bindEmailSettings();
         return;
       }
 
@@ -1034,7 +1036,6 @@
     }
 
     if (window.ADMIN_MODE) renderAdmin();
-    if (window.ADMIN_MODE) bindEmailSettings();
     if (window.MENTORS_MODE) renderMentorsPage();
 
     bindForm();
