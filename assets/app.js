@@ -621,7 +621,7 @@
 
     if (titleEl) titleEl.textContent = title;
     if (pageTitle) pageTitle.textContent = title;
-    if (subEl) subEl.textContent = (String(gender).toLowerCase() === 'female' ? 'Female' : 'Male') + ' mentors';
+    if (subEl) subEl.textContent = '';
 
     showLoading(tableEl);
 
