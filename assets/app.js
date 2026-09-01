@@ -476,9 +476,11 @@
       }
 
       var nameEl = document.getElementById('acctName');
+      var genderEl = document.getElementById('acctGender');
       var workerIDEl = document.getElementById('acctWorkerID');
       if (user) {
         if (nameEl) nameEl.value = user.name || '';
+        if (genderEl) genderEl.value = user.gender || 'Male';
         if (workerIDEl) workerIDEl.value = user.workerID || '';
       }
 
@@ -489,12 +491,14 @@
 
           var currentPass = document.getElementById('acctCurrentPass').value;
           var newName = nameEl.value.trim();
+          var newGender = genderEl ? genderEl.value : '';
           var newWorkerID = workerIDEl.value.trim();
           var newPass = document.getElementById('acctNewPass').value;
           var confirmPass = document.getElementById('acctConfirmPass').value;
 
           if (!currentPass) { flash('Enter your current password to save changes.', 'danger'); return; }
           if (!newName) { flash('Full name is required.', 'danger'); return; }
+          if (!newGender) { flash('Gender is required.', 'danger'); return; }
           if (!newWorkerID) { flash('Worker ID is required.', 'danger'); return; }
           if (newWorkerID.toLowerCase() === 'admin' || newWorkerID === ADMIN_STAFF_ID) { flash('That Worker ID is reserved.', 'danger'); return; }
           if (newPass || confirmPass) {
@@ -518,6 +522,7 @@
             var updatedMentor = {
               workerID: newWorkerID,
               name: newName,
+              gender: newGender,
               password: newPass ? newPass : mentor.password
             };
             _mentors[idx] = updatedMentor;
@@ -537,6 +542,7 @@
                 oldWorkerID: oldWorkerID,
                 workerID: newWorkerID,
                 name: newName,
+                gender: newGender,
                 password: updatedMentor.password
               } }).catch(function () {});
             }
@@ -788,13 +794,13 @@
               if (idx2 === -1) { flash('No account found with that Worker ID.', 'danger'); return; }
               if (_mentors[idx2].password !== password) { flash('Incorrect password.', 'danger'); return; }
               var m2 = _mentors[idx2];
-              setSessionUser({ workerID: m2.workerID, name: m2.name }, 'index.html');
+              setSessionUser({ workerID: m2.workerID, name: m2.name, gender: m2.gender || '' }, 'index.html');
             });
             return;
           }
           if (_mentors[idx].password !== password) { flash('Incorrect password.', 'danger'); return; }
           var m = _mentors[idx];
-          setSessionUser({ workerID: m.workerID, name: m.name }, 'index.html');
+          setSessionUser({ workerID: m.workerID, name: m.name, gender: m.gender || '' }, 'index.html');
         });
       });
     }
@@ -804,11 +810,13 @@
       registerForm.addEventListener('submit', function (e) {
         e.preventDefault();
         var name = document.getElementById('regName').value.trim();
+        var gender = document.getElementById('regGender') ? document.getElementById('regGender').value : '';
         var username = document.getElementById('regUsername').value.trim();
         var password = document.getElementById('regPassword').value;
         var confirm = document.getElementById('regConfirm').value;
 
         if (!name) { flash('Full name is required.', 'danger'); return; }
+        if (!gender) { flash('Gender is required.', 'danger'); return; }
         if (!username) { flash('Worker ID is required.', 'danger'); return; }
         if (username.toLowerCase() === 'admin' || username === ADMIN_STAFF_ID) { flash('That Worker ID is reserved.', 'danger'); return; }
         if (password.length < 8) { flash('Password must be at least 8 characters.', 'danger'); return; }
@@ -818,12 +826,12 @@
           var idx = indexOfMentorByUsername(username);
           if (idx !== -1) { flash('That Worker ID is already registered.', 'danger'); return; }
 
-          var newMentor = { workerID: username, name: name, password: password };
+          var newMentor = { workerID: username, name: name, gender: gender, password: password };
           _mentors.push(newMentor);
           saveCachedMentors(_mentors);
 
           if (GAS_URL) {
-            apiPost('addMentor', { data: { workerID: username, name: name, password: password } }).then(function () {
+            apiPost('addMentor', { data: { workerID: username, name: name, gender: gender, password: password } }).then(function () {
               flash('Account created successfully. Please sign in.', 'success');
               setTimeout(function () { window.location.href = 'login.html'; }, 600);
             }).catch(function () {

@@ -7,7 +7,7 @@
  * 3. Delete any existing code and paste this entire file
  * 4. Create a second script file named "Code.gs" (or just paste into the default)
  * 5. Make sure your spreadsheet has two sheets named exactly:
- *      - "Mentors"  (columns: workerID | name | password)
+ *      - "Mentors"  (columns: workerID | name | gender | password)
  *        where "workerID" is the worker's ID used to sign in.
  *      - "Mentees"  (columns: id | name | status | contact | birthday | address |
  *                             cldp1 | cldp2 | cldp3 | module | moduleLesson |
@@ -85,7 +85,7 @@ function doPost(e) {
 
     } else if (action === 'addMentor') {
       var newMentor = body.data;
-      appendRow_(MENTORS_SHEET, ['workerID', 'name', 'password'], newMentor);
+      appendRow_(MENTORS_SHEET, ['workerID', 'name', 'gender', 'password'], newMentor);
       output = { success: true, data: newMentor };
 
     } else if (action === 'updateMentor') {
@@ -161,6 +161,8 @@ function updateMentorRow_(data) {
       sheet.getRange(rowIndex, idCol + 1).setValue(newWorkerID);
       var nameCol = headers.indexOf('name');
       if (nameCol !== -1) sheet.getRange(rowIndex, nameCol + 1).setValue(data.name || '');
+      var genderCol = headers.indexOf('gender');
+      if (genderCol !== -1) sheet.getRange(rowIndex, genderCol + 1).setValue(data.gender || '');
       var passCol = headers.indexOf('password');
       if (passCol !== -1) sheet.getRange(rowIndex, passCol + 1).setValue(data.password || '');
 

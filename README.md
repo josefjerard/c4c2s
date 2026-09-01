@@ -9,7 +9,7 @@ GitHub Pages: https://josefjerard.github.io/c4c2s/
 ## Pages
 
 - **Login** (`login.html`) — mentors sign in with their Worker ID and password. Worker ID `1990` / password opens the admin dashboard.
-- **Register** (`register.html`) — create a mentor account (Full Name, Worker ID, Password, Confirm Password). Worker ID must be unique.
+- **Register** (`register.html`) — create a mentor account (Full Name, Gender, Worker ID, Password, Confirm Password). Worker ID must be unique.
 - **Mentor app** (`index.html`) — the per-mentor mentee workspace: dashboard stats, live search, status filter, mentee table (name, status, potential mentor, remarks).
 - **Add / Edit mentee** (`create.html`, `edit.html`) — full mentee form.
 - **Mentee details** (`view.html`) — view-only detail of a mentee (all fields).
@@ -19,7 +19,7 @@ GitHub Pages: https://josefjerard.github.io/c4c2s/
 ## Authentication
 
 - Login requires a **Worker ID** and **password**.
-- Registration requires **Full Name**, **Worker ID**, **Password** (min 8 chars), and **Confirm Password**.
+- Registration requires **Full Name**, **Gender**, **Worker ID**, **Password** (min 8 chars), and **Confirm Password**.
 - The admin account (Worker ID `1990`) is reserved, separate from normal mentors, and only used to access the admin dashboard.
 - Mentors are cached in `localStorage` so login works even if the Apps Script backend is temporarily unreachable.
 
@@ -29,7 +29,7 @@ Data is stored in a Google Spreadsheet accessed through Google Apps Script (`gas
 
 The spreadsheet has two sheets:
 
-- **Mentors** — columns: `workerID | name | password`
+- **Mentors** — columns: `workerID | name | gender | password`
 - **Mentees** — columns: `id | name | status | contact | birthday | address | cldp1 | cldp2 | cldp3 | module | moduleLesson | potentialMentor | c2s101 | otherTrainings | remarks | mentor | createdAt | updatedAt`
 
 The Apps Script endpoint is configured as `GAS_URL` in `assets/app.js`. Mentors/mentees are also cached in `localStorage` keys:

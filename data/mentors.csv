@@ -1,4 +1,4 @@
-workerID,name
-jdoe,John Doe
-ssmith,Sarah Smith
-mgarcia,Maria Garcia
+workerID,name,gender
+jdoe,John Doe,Male
+ssmith,Sarah Smith,Female
+mgarcia,Maria Garcia,Female

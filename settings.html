@@ -51,12 +51,19 @@
 
     <div class="settings-card" id="accountCard">
       <h2>Account Information</h2>
-      <p class="desc">Update your full name, Worker ID, or password.</p>
+      <p class="desc">Update your full name, gender, Worker ID, or password.</p>
 
       <form id="accountForm" class="form-grid" style="margin-top:8px;">
         <div class="form-group">
           <label for="acctName">Full Name</label>
           <input type="text" id="acctName" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="acctGender">Gender</label>
+          <select id="acctGender">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
         </div>
         <div class="form-group">
           <label for="acctWorkerID">Worker ID</label>
