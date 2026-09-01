@@ -361,7 +361,8 @@
           flash('Failed to update: ' + err.message, 'danger');
         });
       } else {
-        data.mentor = 'admin';
+        var currentUser = getSessionUser();
+        data.mentor = currentUser ? String(currentUser.workerID || '') : '';
         addMentee(data).then(function () {
           flash('Mentee added successfully.', 'success');
           setTimeout(function () { window.location.href = 'index.html'; }, 600);
@@ -595,7 +596,7 @@
 
         return '<div class="table-wrap admin-group" style="margin-bottom:16px;">' +
           '<div class="admin-mentor" data-mentor="' + esc(mn.workerID) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
-          '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span><div class="mentee-sub">' + esc(mn.workerID) + '</div></div>' +
+          '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span></div>' +
           '<div><div class="info-label">Worker ID</div><div class="info-value">' + esc(mn.workerID) + '</div></div>' +
           '<div><div class="info-label">Password</div><div class="info-value">' + esc(mn.password || '\u2014') + '</div></div>' +
           '<div><div class="info-label">Mentees</div><div><span class="badge badge-neutral">' + count + '</span></div></div>' +
