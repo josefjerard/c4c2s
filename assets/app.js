@@ -556,9 +556,95 @@
 
   /* ---------- Admin dashboard ---------- */
 
+  function genderTitle(gender) {
+    return String(gender || '').toLowerCase() === 'female' ? 'GORGEOUS' : 'GWAPO';
+  }
+
+  function buildMentorGroupHtml(mentorList, mentees) {
+    return mentorList.map(function (mn) {
+      var own = mentees.filter(function (m) { return String(m.mentor || '').trim() === String(mn.workerID || '').trim(); });
+      var count = own.length;
+
+      var menteeRows = own.length === 0
+        ? '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No mentees assigned</td></tr>'
+        : own.map(function (m) {
+            return '<tr>' +
+              '<td><a href="view.html?id=' + encodeURIComponent(m.id) + '&amp;readonly=1" class="mentee-name" style="color:var(--primary);">' + esc(m.name) + '</a></td>' +
+              '<td><span class="badge ' + statusBadgeClass(m.status) + '"><span class="badge-dot"></span>' + esc(m.status) + '</span></td>' +
+              '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
+              '<td style="max-width:280px;">' + esc(m.remarks || '\u2014') + '</td>' +
+              '</tr>';
+          }).join('');
+
+      var menteeBlock = own.length
+        ? '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);">' +
+          '<table><thead><tr><th>Mentee</th><th>Status</th><th>Potential Mentor</th><th>Remarks</th></tr></thead>' +
+          '<tbody>' + menteeRows + '</tbody></table></div>'
+        : '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);padding:16px 20px;color:var(--text-muted);">No mentees assigned.</div>';
+
+      return '<div class="table-wrap admin-group" style="margin-bottom:16px;">' +
+        '<div class="admin-mentor" data-mentor="' + esc(mn.workerID) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
+        '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span></div>' +
+        '<div><div class="info-label">Gender</div><div class="info-value">' + esc(mn.gender || '\u2014') + '</div></div>' +
+        '<div><div class="info-label">Worker ID</div><div class="info-value">' + esc(mn.workerID) + '</div></div>' +
+        '<div><div class="info-label">Password</div><div class="info-value">' + esc(mn.password || '\u2014') + '</div></div>' +
+        '<div><div class="info-label">Mentees</div><div><span class="badge badge-neutral">' + count + '</span></div></div>' +
+        '<div class="admin-caret" style="color:var(--text-muted);">&#9662;</div>' +
+        '</div>' + menteeBlock + '</div>';
+    }).join('');
+  }
+
+  function bindMentorExpand() {
+    var container = document.getElementById('adminTableContainer');
+    if (!container) return;
+    container.querySelectorAll('.admin-group').forEach(function (group) {
+      var block = group.querySelector('.admin-mentees');
+      var caret = group.querySelector('.admin-caret');
+      group.querySelector('.admin-mentor').addEventListener('click', function () {
+        var isHidden = block.style.display === 'none';
+        block.style.display = isHidden ? '' : 'none';
+        caret.innerHTML = isHidden ? '&#9652;' : '&#9662;';
+      });
+    });
+  }
+
+  function renderMentorsPage() {
+    var tableEl = document.getElementById('adminTableContainer');
+    var titleEl = document.getElementById('mentorListTitle');
+    var subEl = document.getElementById('mentorListSubtitle');
+    var pageTitle = document.getElementById('pageTitle');
+    if (!tableEl) return;
+
+    var params = new URLSearchParams(window.location.search);
+    var gender = params.get('gender') || '';
+    var title = genderTitle(gender);
+
+    if (titleEl) titleEl.textContent = title;
+    if (pageTitle) pageTitle.textContent = title;
+    if (subEl) subEl.textContent = (String(gender).toLowerCase() === 'female' ? 'Female' : 'Male') + ' mentors';
+
+    showLoading(tableEl);
+
+    Promise.all([fetchMentors(), fetchMentees()]).then(function () {
+      var mentors = getMentors().filter(function (mn) { return mn.workerID !== ADMIN_STAFF_ID; });
+      var mentees = getMentees();
+      var filtered = mentors.filter(function (mn) {
+        return String(mn.gender || '').toLowerCase() === gender.toLowerCase();
+      });
+
+      if (filtered.length === 0) {
+        tableEl.innerHTML = '<div class="empty-state"><h3>No ' + title + ' mentors</h3><p>No mentors in this category yet.</p></div>';
+        return;
+      }
+
+      tableEl.innerHTML = buildMentorGroupHtml(filtered, mentees);
+      bindMentorExpand();
+    });
+  }
+
   function renderAdmin() {
     var statsEl = document.getElementById('adminStats');
-    var tableEl = document.getElementById('adminTableContainer');
+    var tableEl = document.getElementById('adminGenderContainer');
     if (!statsEl || !tableEl) return;
 
     showLoading(tableEl);
@@ -574,67 +660,20 @@
         card('Total Mentees', totalMentees, 'active') +
         card('Total Members', totalMembers, 'transferred');
 
-      if (mentors.length === 0) {
-        tableEl.innerHTML = '<div class="empty-state"><h3>No mentors registered</h3><p>Mentor accounts will appear here once created.</p></div>';
-        return;
-      }
-
-      function renderMentorGroup(mentorList, title) {
-        if (!mentorList.length) return '';
-        var groupHtml = mentorList.map(function (mn) {
-          var own = mentees.filter(function (m) { return String(m.mentor || '').trim() === String(mn.workerID || '').trim(); });
-          var count = own.length;
-
-          var menteeRows = own.length === 0
-            ? '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No mentees assigned</td></tr>'
-            : own.map(function (m) {
-                return '<tr>' +
-                  '<td><a href="view.html?id=' + encodeURIComponent(m.id) + '&amp;readonly=1" class="mentee-name" style="color:var(--primary);">' + esc(m.name) + '</a></td>' +
-                  '<td><span class="badge ' + statusBadgeClass(m.status) + '"><span class="badge-dot"></span>' + esc(m.status) + '</span></td>' +
-                  '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
-                  '<td style="max-width:280px;">' + esc(m.remarks || '\u2014') + '</td>' +
-                  '</tr>';
-              }).join('');
-
-          var menteeBlock = own.length
-            ? '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);">' +
-              '<table><thead><tr><th>Mentee</th><th>Status</th><th>Potential Mentor</th><th>Remarks</th></tr></thead>' +
-              '<tbody>' + menteeRows + '</tbody></table></div>'
-            : '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);padding:16px 20px;color:var(--text-muted);">No mentees assigned.</div>';
-
-          return '<div class="table-wrap admin-group" style="margin-bottom:16px;">' +
-            '<div class="admin-mentor" data-mentor="' + esc(mn.workerID) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
-            '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span></div>' +
-            '<div><div class="info-label">Worker ID</div><div class="info-value">' + esc(mn.workerID) + '</div></div>' +
-            '<div><div class="info-label">Password</div><div class="info-value">' + esc(mn.password || '\u2014') + '</div></div>' +
-            '<div><div class="info-label">Mentees</div><div><span class="badge badge-neutral">' + count + '</span></div></div>' +
-            '<div class="admin-caret" style="color:var(--text-muted);">&#9662;</div>' +
-            '</div>' + menteeBlock + '</div>';
-        }).join('');
-
-        return '<div style="margin-bottom:28px;">' +
-          '<h2 style="font-size:1.1rem;margin:0 0 10px;">' + esc(title) + '</h2>' +
-          groupHtml + '</div>';
-      }
-
       var males = mentors.filter(function (mn) { return String(mn.gender || '').toLowerCase() === 'male'; });
       var females = mentors.filter(function (mn) { return String(mn.gender || '').toLowerCase() === 'female'; });
 
-      var html =
-        renderMentorGroup(males, 'GWAPO') +
-        renderMentorGroup(females, 'GORGEOUS');
+      function genderCard(name, count, link, cls) {
+        return '<a href="' + link + '" class="stat-card ' + cls + '" style="display:block;text-decoration:none;color:inherit;">' +
+          '<div class="stat-label">' + esc(name) + '</div>' +
+          '<div class="stat-value">' + count + '</div>' +
+          '</a>';
+      }
 
-      tableEl.innerHTML = html;
-
-      tableEl.querySelectorAll('.admin-group').forEach(function (group) {
-        var block = group.querySelector('.admin-mentees');
-        var caret = group.querySelector('.admin-caret');
-        group.querySelector('.admin-mentor').addEventListener('click', function () {
-          var isHidden = block.style.display === 'none';
-          block.style.display = isHidden ? '' : 'none';
-          caret.innerHTML = isHidden ? '&#9652;' : '&#9662;';
-        });
-      });
+      tableEl.innerHTML = '<section class="stats" style="margin-bottom:0;">' +
+        genderCard('GWAPO', males.length, 'mentors.html?gender=male', 'total') +
+        genderCard('GORGEOUS', females.length, 'mentors.html?gender=female', 'active') +
+        '</section>';
     });
   }
 
@@ -903,6 +942,7 @@
     }
 
     if (window.ADMIN_MODE) renderAdmin();
+    if (window.MENTORS_MODE) renderMentorsPage();
 
     bindForm();
     renderView();
