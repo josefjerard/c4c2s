@@ -13,7 +13,7 @@ GitHub Pages: https://josefjerard.github.io/c4c2s/
 - **Mentor app** (`index.html`) — the per-mentor mentee workspace: dashboard stats, live search, status filter, mentee table (name, status, potential mentor, remarks).
 - **Add / Edit mentee** (`create.html`, `edit.html`) — full mentee form.
 - **Mentee details** (`view.html`) — view-only detail of a mentee (all fields).
-- **Admin dashboard** (`admin.html`) — overview of registered mentors (Worker ID, email, password) and mentee counts. Mentor accounts are clickable to reveal their mentees; mentee names open in read-only view mode.
+- **Admin dashboard** (`admin.html`) — overview of registered mentors (Worker ID, password) and mentee counts. Mentor accounts are clickable to reveal their mentees; mentee names open in read-only view mode.
 - **Settings** (`settings.html`) — dark/light mode and account information (edit full name, Worker ID, and password).
 
 ## Authentication
@@ -29,7 +29,7 @@ Data is stored in a Google Spreadsheet accessed through Google Apps Script (`gas
 
 The spreadsheet has two sheets:
 
-- **Mentors** — columns: `workerID | name | email | password`
+- **Mentors** — columns: `workerID | name | password`
 - **Mentees** — columns: `id | name | status | contact | birthday | address | cldp1 | cldp2 | cldp3 | module | moduleLesson | potentialMentor | c2s101 | otherTrainings | remarks | mentor | createdAt | updatedAt`
 
 The Apps Script endpoint is configured as `GAS_URL` in `assets/app.js`. Mentors/mentees are also cached in `localStorage` keys:

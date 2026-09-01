@@ -517,7 +517,6 @@
             var updatedMentor = {
               workerID: newWorkerID,
               name: newName,
-              email: mentor.email || '',
               password: newPass ? newPass : mentor.password
             };
             _mentors[idx] = updatedMentor;
@@ -537,7 +536,6 @@
                 oldWorkerID: oldWorkerID,
                 workerID: newWorkerID,
                 name: newName,
-                email: mentor.email || '',
                 password: updatedMentor.password
               } }).catch(function () {});
             }
@@ -782,13 +780,13 @@
               if (idx2 === -1) { flash('No account found with that Worker ID.', 'danger'); return; }
               if (_mentors[idx2].password !== password) { flash('Incorrect password.', 'danger'); return; }
               var m2 = _mentors[idx2];
-              setSessionUser({ workerID: m2.workerID, name: m2.name, email: m2.email }, 'index.html');
+              setSessionUser({ workerID: m2.workerID, name: m2.name }, 'index.html');
             });
             return;
           }
           if (_mentors[idx].password !== password) { flash('Incorrect password.', 'danger'); return; }
           var m = _mentors[idx];
-          setSessionUser({ workerID: m.workerID, name: m.name, email: m.email }, 'index.html');
+          setSessionUser({ workerID: m.workerID, name: m.name }, 'index.html');
         });
       });
     }
