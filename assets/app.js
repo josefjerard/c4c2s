@@ -579,36 +579,50 @@
         return;
       }
 
-      var html = mentors.map(function (mn) {
-        var own = mentees.filter(function (m) { return String(m.mentor || '').trim() === String(mn.workerID || '').trim(); });
-        var count = own.length;
+      function renderMentorGroup(mentorList, title) {
+        if (!mentorList.length) return '';
+        var groupHtml = mentorList.map(function (mn) {
+          var own = mentees.filter(function (m) { return String(m.mentor || '').trim() === String(mn.workerID || '').trim(); });
+          var count = own.length;
 
-        var menteeRows = own.length === 0
-          ? '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No mentees assigned</td></tr>'
-          : own.map(function (m) {
-              return '<tr>' +
-                '<td><a href="view.html?id=' + encodeURIComponent(m.id) + '&amp;readonly=1" class="mentee-name" style="color:var(--primary);">' + esc(m.name) + '</a></td>' +
-                '<td><span class="badge ' + statusBadgeClass(m.status) + '"><span class="badge-dot"></span>' + esc(m.status) + '</span></td>' +
-                '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
-                '<td style="max-width:280px;">' + esc(m.remarks || '\u2014') + '</td>' +
-                '</tr>';
-            }).join('');
+          var menteeRows = own.length === 0
+            ? '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No mentees assigned</td></tr>'
+            : own.map(function (m) {
+                return '<tr>' +
+                  '<td><a href="view.html?id=' + encodeURIComponent(m.id) + '&amp;readonly=1" class="mentee-name" style="color:var(--primary);">' + esc(m.name) + '</a></td>' +
+                  '<td><span class="badge ' + statusBadgeClass(m.status) + '"><span class="badge-dot"></span>' + esc(m.status) + '</span></td>' +
+                  '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
+                  '<td style="max-width:280px;">' + esc(m.remarks || '\u2014') + '</td>' +
+                  '</tr>';
+              }).join('');
 
-        var menteeBlock = own.length
-          ? '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);">' +
-            '<table><thead><tr><th>Mentee</th><th>Status</th><th>Potential Mentor</th><th>Remarks</th></tr></thead>' +
-            '<tbody>' + menteeRows + '</tbody></table></div>'
-          : '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);padding:16px 20px;color:var(--text-muted);">No mentees assigned.</div>';
+          var menteeBlock = own.length
+            ? '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);">' +
+              '<table><thead><tr><th>Mentee</th><th>Status</th><th>Potential Mentor</th><th>Remarks</th></tr></thead>' +
+              '<tbody>' + menteeRows + '</tbody></table></div>'
+            : '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);padding:16px 20px;color:var(--text-muted);">No mentees assigned.</div>';
 
-        return '<div class="table-wrap admin-group" style="margin-bottom:16px;">' +
-          '<div class="admin-mentor" data-mentor="' + esc(mn.workerID) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
-          '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span></div>' +
-          '<div><div class="info-label">Worker ID</div><div class="info-value">' + esc(mn.workerID) + '</div></div>' +
-          '<div><div class="info-label">Password</div><div class="info-value">' + esc(mn.password || '\u2014') + '</div></div>' +
-          '<div><div class="info-label">Mentees</div><div><span class="badge badge-neutral">' + count + '</span></div></div>' +
-          '<div class="admin-caret" style="color:var(--text-muted);">&#9662;</div>' +
-          '</div>' + menteeBlock + '</div>';
-      }).join('');
+          return '<div class="table-wrap admin-group" style="margin-bottom:16px;">' +
+            '<div class="admin-mentor" data-mentor="' + esc(mn.workerID) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
+            '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span></div>' +
+            '<div><div class="info-label">Worker ID</div><div class="info-value">' + esc(mn.workerID) + '</div></div>' +
+            '<div><div class="info-label">Password</div><div class="info-value">' + esc(mn.password || '\u2014') + '</div></div>' +
+            '<div><div class="info-label">Mentees</div><div><span class="badge badge-neutral">' + count + '</span></div></div>' +
+            '<div class="admin-caret" style="color:var(--text-muted);">&#9662;</div>' +
+            '</div>' + menteeBlock + '</div>';
+        }).join('');
+
+        return '<div style="margin-bottom:28px;">' +
+          '<h2 style="font-size:1.1rem;margin:0 0 10px;">' + esc(title) + '</h2>' +
+          groupHtml + '</div>';
+      }
+
+      var males = mentors.filter(function (mn) { return String(mn.gender || '').toLowerCase() === 'male'; });
+      var females = mentors.filter(function (mn) { return String(mn.gender || '').toLowerCase() === 'female'; });
+
+      var html =
+        renderMentorGroup(males, 'GWAPO') +
+        renderMentorGroup(females, 'GORGEOUS');
 
       tableEl.innerHTML = html;
 
