@@ -34,9 +34,12 @@
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(Object.assign({ action: action }, body))
     })
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (r && r.type === 'opaque') return { success: true, data: null };
+        return r.json();
+      })
       .then(function (res) {
-        if (!res.success) throw new Error(res.error || 'API error');
+        if (!res || !res.success) throw new Error((res && res.error) || 'API error');
         return res.data;
       });
   }
