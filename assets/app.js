@@ -56,7 +56,7 @@
 
   function fetchMentors() {
     return apiGet('getMentors').then(function (data) {
-      _mentors = Array.isArray(data) ? data : [];
+      _mentors = (Array.isArray(data) ? data : []).map(normalizeMentor);
       return _mentors;
     }).catch(function () {
       _mentors = [];
@@ -650,7 +650,8 @@
   function indexOfMentorByUsername(username) {
     if (!username) return -1;
     for (var i = 0; i < _mentors.length; i++) {
-      if ((_mentors[i].workerID || '') === username) return i;
+      var id = _mentors[i].workerID || _mentors[i].username || '';
+      if (String(id) === username) return i;
     }
     return -1;
   }
@@ -670,11 +671,16 @@
     } catch (e) {}
   }
 
+  function normalizeMentor(m) {
+    if (!m.workerID && m.username) m.workerID = m.username;
+    return m;
+  }
+
   function mergeMentors(list) {
-    var merged = (list || []).slice();
+    var merged = (list || []).slice().map(normalizeMentor);
     var cached = getCachedMentors();
     if (cached) {
-      cached.forEach(function (c) {
+      cached.slice().map(normalizeMentor).forEach(function (c) {
         var exists = merged.some(function (m) { return String(m.workerID) === String(c.workerID); });
         if (!exists) merged.push(c);
       });
