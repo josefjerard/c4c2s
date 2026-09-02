@@ -357,6 +357,18 @@ function sendNotification_(subject, body) {
   }
 }
 
+function testDirect() {
+  var settings = getSettings_();
+  var to = String(settings.notifyEmail || '').trim();
+  if (!to) return 'No recipient email saved. Save it first.';
+  try {
+    MailApp.sendEmail(to, '[C2S] Direct Test', 'Direct test from the Apps Script editor.');
+    return 'Email sent successfully to ' + to;
+  } catch (err) {
+    return 'FAILED: ' + err.message;
+  }
+}
+
 function diag_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   if (!ss) return { error: 'No active spreadsheet. Script may not be bound to a spreadsheet.' };
