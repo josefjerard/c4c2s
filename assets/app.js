@@ -797,9 +797,6 @@
       }
       var settings = collectSettings();
       apiPost('saveSettings', { data: settings }).then(function () {
-        return apiGet('getSettings');
-      }).then(function (saved) {
-        applySettings(saved);
         flash('Email notification settings saved.', 'success');
       }).catch(function (err) {
         flash('Failed to save settings: ' + err.message, 'danger');
