@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - C2S Mentee Management</title>
+  <title>C2S Admin Dashboard</title>
   <script>
     if (!localStorage.getItem('c2s_session')) {
       window.location.replace('login.html');
@@ -14,9 +14,9 @@
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <a href="index.html" class="brand">
+      <a href="admin.html" class="brand">
         <span class="brand-logo">C2</span>
-        <span>Admin Dashboard</span>
+        <span>C2S Admin</span>
       </a>
       <div class="topbar-actions"></div>
     </div>
@@ -38,7 +38,7 @@
     <div class="admin-container" id="adminGenderContainer"></div>
   </main>
 
-  <footer class="footer">C2S Mentee Management System &middot; Admin Dashboard</footer>
+  <footer class="footer">C2S Admin System &middot; Admin Dashboard</footer>
 
   <script>
     window.ADMIN_MODE = true;

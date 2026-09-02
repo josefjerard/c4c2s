@@ -940,7 +940,7 @@
 
     if (user) {
       if (isAdmin(user)) {
-        links.push('<a href="admin.html">Admin</a>');
+        links.push('<a href="admin.html">C2S Admin</a>');
       }
       links.push('<a href="settings.html">Settings</a>');
       links.push('<span class="topbar-user">' + esc(user.name || user.workerID) + '</span>');
