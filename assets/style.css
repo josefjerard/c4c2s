@@ -515,21 +515,6 @@ td .mentee-sub {
   color: var(--danger);
 }
 
-.checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.checkbox-row input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--primary);
-}
-
 .form-group .help {
   font-size: 0.78rem;
   color: var(--text-muted);

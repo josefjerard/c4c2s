@@ -277,11 +277,7 @@ function generateId_() {
 /* ---------- Email notification settings ---------- */
 
 var DEFAULT_SETTINGS = {
-  notifyEmail: '',
-  notifyOnMentorRegister: 'true',
-  notifyOnMentorUpdate: 'true',
-  notifyOnMenteeAdd: 'true',
-  notifyOnMenteeUpdate: 'true'
+  notifyEmail: ''
 };
 
 function ensureSettingsSheet_() {
@@ -342,14 +338,6 @@ function sendNotification_(subject, body) {
     var settings = getSettings_();
     var to = String(settings.notifyEmail || '').trim();
     if (!to) return;
-    var isOn = function (k) { return String(settings[k] || 'true') !== 'false'; };
-
-    if (subject.indexOf('test') === -1) {
-      if (/New mentor registered/.test(subject) && !isOn('notifyOnMentorRegister')) return;
-      if (/Mentor account updated/.test(subject) && !isOn('notifyOnMentorUpdate')) return;
-      if (/New mentee added/.test(subject) && !isOn('notifyOnMenteeAdd')) return;
-      if (/Mentee updated/.test(subject) && !isOn('notifyOnMenteeUpdate')) return;
-    }
 
     var fullSubject = '[C2S] ' + subject;
     MailApp.sendEmail(to, fullSubject, body);

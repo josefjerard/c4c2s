@@ -775,31 +775,15 @@
     if (!card || !form) return;
 
     var emailEl = document.getElementById('notifyEmail');
-    var cbRegister = document.getElementById('notifyMentorRegister');
-    var cbUpdate = document.getElementById('notifyMentorUpdate');
-    var cbAdd = document.getElementById('notifyMenteeAdd');
-    var cbMenteeUpdate = document.getElementById('notifyMenteeUpdate');
     var testBtn = document.getElementById('testEmailBtn');
 
     function applySettings(s) {
       s = s || {};
-      if (!s.notifyEmail && !s.notifyOnMentorRegister && !s.notifyOnMentorUpdate &&
-          !s.notifyOnMenteeAdd && !s.notifyOnMenteeUpdate) return;
-      emailEl.value = s.notifyEmail || '';
-      cbRegister.checked = String(s.notifyOnMentorRegister || 'true') !== 'false';
-      cbUpdate.checked = String(s.notifyOnMentorUpdate || 'true') !== 'false';
-      cbAdd.checked = String(s.notifyOnMenteeAdd || 'true') !== 'false';
-      cbMenteeUpdate.checked = String(s.notifyOnMenteeUpdate || 'true') !== 'false';
+      if (s.notifyEmail !== undefined) emailEl.value = s.notifyEmail || '';
     }
 
     function collectSettings() {
-      return {
-        notifyEmail: emailEl.value.trim(),
-        notifyOnMentorRegister: cbRegister.checked ? 'true' : 'false',
-        notifyOnMentorUpdate: cbUpdate.checked ? 'true' : 'false',
-        notifyOnMenteeAdd: cbAdd.checked ? 'true' : 'false',
-        notifyOnMenteeUpdate: cbMenteeUpdate.checked ? 'true' : 'false'
-      };
+      return { notifyEmail: emailEl.value.trim() };
     }
 
     apiGet('getSettings').then(applySettings).catch(function () {});
@@ -812,7 +796,9 @@
         return;
       }
       var settings = collectSettings();
-      apiPost('saveSettings', { data: settings }).then(function (saved) {
+      apiPost('saveSettings', { data: settings }).then(function () {
+        return apiGet('getSettings');
+      }).then(function (saved) {
         applySettings(saved);
         flash('Email notification settings saved.', 'success');
       }).catch(function (err) {
@@ -825,7 +811,10 @@
         var email = emailEl.value.trim();
         if (!email) { flash('Enter a recipient email before sending a test.', 'danger'); return; }
         testBtn.disabled = true;
-        apiPost('testEmail', { data: collectSettings() }).then(function () {
+        var settings = collectSettings();
+        apiPost('saveSettings', { data: settings }).then(function () {
+          return apiPost('testEmail', { data: settings });
+        }).then(function () {
           flash('Test email sent.', 'success');
           testBtn.disabled = false;
         }).catch(function (err) {
