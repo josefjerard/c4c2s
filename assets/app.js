@@ -751,8 +751,8 @@
       }
 
       tableEl.innerHTML = '<section class="stats" style="margin-bottom:0;">' +
-        genderCard('GWAPO', males.length, 'mentors.html?gender=male', 'total') +
-        genderCard('GORGEOUS', females.length, 'mentors.html?gender=female', 'active') +
+        genderCard('GWAPO MENTORS', males.length, 'mentors.html?gender=male', 'total') +
+        genderCard('GORGEOUS MENTORS', females.length, 'mentors.html?gender=female', 'active') +
         '</section>';
     });
   }
@@ -939,9 +939,6 @@
     if (window.AUTH_PAGE) return;
 
     if (user) {
-      if (isAdmin(user)) {
-        links.push('<a href="admin.html">C2S Admin</a>');
-      }
       links.push('<a href="settings.html">Settings</a>');
       links.push('<span class="topbar-user">' + esc(user.name || user.workerID) + '</span>');
       links.push('<a href="#" id="logoutLink" class="btn btn-outline btn-sm">Logout</a>');
