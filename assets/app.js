@@ -175,11 +175,29 @@
     return age >= 0 ? age : null;
   }
 
+  var FLASH_KEY = 'c2s_flash';
+
   function flash(message, type) {
     var box = document.getElementById('flashMessage');
-    if (!box) return;
-    box.innerHTML = '<div class="alert alert-' + type + '">' + esc(message) + '</div>';
-    setTimeout(function () { box.innerHTML = ''; }, 3600);
+    if (box) {
+      box.innerHTML = '<div class="alert alert-' + type + '">' + esc(message) + '</div>';
+      setTimeout(function () { box.innerHTML = ''; }, 3600);
+    }
+  }
+
+  function persistFlash(message, type) {
+    try { sessionStorage.setItem(FLASH_KEY, JSON.stringify({ message: message, type: type })); } catch (e) {}
+  }
+
+  function applyPendingFlash() {
+    var raw;
+    try { raw = sessionStorage.getItem(FLASH_KEY); } catch (e) {}
+    if (!raw) return;
+    try { sessionStorage.removeItem(FLASH_KEY); } catch (e) {}
+    try {
+      var f = JSON.parse(raw);
+      flash(f.message, f.type);
+    } catch (e) {}
   }
 
   function setFormBusy(form, busy, busyText) {
@@ -627,6 +645,7 @@
 
             setSaving(false);
             flash('Account updated successfully.', 'success');
+            persistFlash('Account updated successfully.', 'success');
             setTimeout(function () {
               if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
               window.scrollTo(0, 0);
@@ -798,8 +817,20 @@
       var settings = collectSettings();
       apiPost('saveSettings', { data: settings }).then(function () {
         flash('Email notification settings saved.', 'success');
+        persistFlash('Email notification settings saved.', 'success');
+        setTimeout(function () {
+          if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+          window.scrollTo(0, 0);
+          window.location.reload();
+        }, 700);
       }).catch(function (err) {
         flash('Failed to save settings: ' + err.message, 'danger');
+        persistFlash('Failed to save settings: ' + err.message, 'danger');
+        setTimeout(function () {
+          if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+          window.scrollTo(0, 0);
+          window.location.reload();
+        }, 700);
       });
     });
 
@@ -1054,6 +1085,8 @@
   function init() {
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     window.scrollTo(0, 0);
+
+    applyPendingFlash();
 
     applyTheme();
 
