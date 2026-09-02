@@ -129,8 +129,8 @@ function doPost(e) {
       output = { success: true, data: getSettings_() };
 
     } else if (action === 'testEmail') {
-      sendNotification_('C2S Test Email', 'This is a test notification from the C2S Mentee Management System. Your email settings are working correctly.');
-      output = { success: true };
+      var sendResult = sendNotification_('C2S Test Email', 'This is a test notification from the C2S Mentee Management System. Your email settings are working correctly.');
+      output = { success: sendResult.ok, error: sendResult.error || null };
 
     } else {
       output = { success: false, error: 'Unknown action: ' + action };
@@ -337,12 +337,13 @@ function sendNotification_(subject, body) {
   try {
     var settings = getSettings_();
     var to = String(settings.notifyEmail || '').trim();
-    if (!to) return;
+    if (!to) return { ok: false, error: 'No recipient email is saved. Save a recipient address first.' };
 
-    var fullSubject = '[C2S] ' + subject;
-    MailApp.sendEmail(to, fullSubject, body);
+    MailApp.sendEmail(to, '[C2S] ' + subject, body);
+    return { ok: true };
   } catch (err) {
     Logger.log('Notification error: ' + err.message);
+    return { ok: false, error: err.message };
   }
 }
 
