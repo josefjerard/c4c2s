@@ -663,13 +663,19 @@
         : '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);padding:16px 20px;color:var(--text-muted);">No mentees assigned.</div>';
 
       return '<div class="table-wrap admin-group" style="margin-bottom:16px;">' +
-        '<div class="admin-mentor" data-mentor="' + esc(mn.workerID) + '" style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
-        '<div style="flex:1;min-width:180px;"><span class="admin-mentor-name">' + esc(mn.name) + '</span></div>' +
-        '<div><div class="info-label">Gender</div><div class="info-value">' + esc(mn.gender || '\u2014') + '</div></div>' +
+        '<div class="admin-mentor" data-mentor="' + esc(mn.workerID) + '" style="display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;padding:18px 20px;cursor:pointer;">' +
+        '<div style="flex:1;min-width:150px;display:flex;align-items:center;justify-content:space-between;gap:12px;">' +
+        '<span class="admin-mentor-name">' + esc(mn.name) + '</span>' +
+        '<span class="admin-caret" style="color:var(--text-muted);">&#9662;</span>' +
+        '</div>' +
+        '<div style="display:flex;flex:1;min-width:200px;gap:24px;flex-wrap:wrap;">' +
         '<div><div class="info-label">Worker ID</div><div class="info-value">' + esc(mn.workerID) + '</div></div>' +
         '<div><div class="info-label">Password</div><div class="info-value">' + esc(mn.password || '\u2014') + '</div></div>' +
+        '</div>' +
+        '<div style="display:flex;flex:1;min-width:200px;gap:24px;flex-wrap:wrap;">' +
+        '<div><div class="info-label">Gender</div><div class="info-value">' + esc(mn.gender || '\u2014') + '</div></div>' +
         '<div><div class="info-label">Mentees</div><div><span class="badge badge-neutral">' + count + '</span></div></div>' +
-        '<div class="admin-caret" style="color:var(--text-muted);">&#9662;</div>' +
+        '</div>' +
         '</div>' + menteeBlock + '</div>';
     }).join('');
   }
