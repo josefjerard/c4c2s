@@ -891,11 +891,14 @@ td .mentee-sub {
     text-overflow: ellipsis;
   }
   .topbar-nav {
-    gap: 4px;
+    gap: 6px;
   }
   .topbar-nav a {
-    padding: 6px 8px;
-    font-size: 0.85rem;
+    padding: 11px 10px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.9rem;
   }
   .topbar-user {
     display: none;
@@ -995,7 +998,7 @@ td .mentee-sub {
     font-size: 0.9rem;
   }
   .topbar-nav a {
-    padding: 6px 6px;
+    padding: 11px 6px;
     font-size: 0.8rem;
   }
 }
