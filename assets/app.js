@@ -627,7 +627,11 @@
 
             setSaving(false);
             flash('Account updated successfully.', 'success');
-            setTimeout(function () { window.location.reload(); }, 700);
+            setTimeout(function () {
+              if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+              window.scrollTo(0, 0);
+              window.location.reload();
+            }, 700);
           });
         });
       }
@@ -1062,6 +1066,9 @@
   /* ---------- Init ---------- */
 
   function init() {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+
     applyTheme();
 
     var themeBtn = document.getElementById('themeToggle');
