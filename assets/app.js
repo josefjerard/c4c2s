@@ -816,15 +816,20 @@
       }
       var settings = collectSettings();
       apiPost('saveSettings', { data: settings }).then(function () {
-        flash('Email notification settings saved.', 'success');
-        persistFlash('Email notification settings saved.', 'success');
+        return apiGet('getSettings');
+      }).then(function (saved) {
+        var savedEmail = saved ? String(saved.notifyEmail || '').trim() : '';
+        if (savedEmail !== email) {
+          persistFlash('Failed to save settings: the server could not be reached. Please redeploy the Google Apps Script.', 'danger');
+        } else {
+          persistFlash('Email notification settings saved.', 'success');
+        }
         setTimeout(function () {
           if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
           window.scrollTo(0, 0);
           window.location.reload();
         }, 700);
       }).catch(function (err) {
-        flash('Failed to save settings: ' + err.message, 'danger');
         persistFlash('Failed to save settings: ' + err.message, 'danger');
         setTimeout(function () {
           if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
