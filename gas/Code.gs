@@ -31,8 +31,13 @@ var MENTEE_HEADERS = [
 ];
 
 function doGet(e) {
-  var action = e.parameter.action;
   var output = { success: false };
+  if (!e || !e.parameter) {
+    return ContentService
+      .createTextOutput(JSON.stringify(output))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  var action = e.parameter.action;
 
   try {
     if (action === 'getMentees') {
@@ -40,7 +45,7 @@ function doGet(e) {
     } else if (action === 'getMentors') {
       output = { success: true, data: getMentors_() };
     } else if (action === 'getMentee') {
-      var id = e.parameter.id;
+      var id = e.parameter.id || null;
       var all = getMentees_();
       var found = null;
       for (var i = 0; i < all.length; i++) {
@@ -64,9 +69,14 @@ function doGet(e) {
 }
 
 function doPost(e) {
-  var body = JSON.parse(e.postData.contents);
-  var action = body.action;
   var output = { success: false };
+  var body = null;
+  try {
+    body = (e && e.postData) ? JSON.parse(e.postData.contents) : {};
+  } catch (err) {
+    body = {};
+  }
+  var action = body.action;
 
   try {
     if (action === 'addMentee') {
