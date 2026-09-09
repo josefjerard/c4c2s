@@ -196,6 +196,13 @@
     return age >= 0 ? age : null;
   }
 
+  function moduleLessonLabel(m) {
+    if (m && m.module && m.moduleLesson) return m.module + ' - ' + m.moduleLesson;
+    if (m && m.moduleLesson) return m.moduleLesson;
+    if (m && m.module) return m.module;
+    return '\u2014';
+  }
+
   var FLASH_KEY = 'c2s_flash';
 
   function flash(message, type) {
@@ -507,11 +514,7 @@
       }
 
       var age = computeAge(m.birthday);
-      var moduleLabel = '';
-      if (m.module && m.moduleLesson) moduleLabel = m.module + ' - ' + m.moduleLesson;
-      else if (m.moduleLesson) moduleLabel = m.moduleLesson;
-      else if (m.module) moduleLabel = m.module;
-      else moduleLabel = '\u2014';
+      var moduleLabel = moduleLessonLabel(m);
 
       document.getElementById('avatar').textContent = initials(m.name);
       nameEl.textContent = m.name || 'Untitled';
@@ -699,19 +702,20 @@
       var count = own.length;
 
       var menteeRows = own.length === 0
-        ? '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No mentees assigned</td></tr>'
+        ? '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No mentees assigned</td></tr>'
         : own.map(function (m) {
             return '<tr>' +
               '<td><a href="view.html?id=' + encodeURIComponent(m.id) + '&amp;readonly=1" class="mentee-name" style="color:var(--primary);">' + esc(m.name) + '</a></td>' +
               '<td><span class="badge ' + statusBadgeClass(m.status) + '"><span class="badge-dot"></span>' + esc(m.status) + '</span></td>' +
+              '<td style="max-width:200px;">' + esc(moduleLessonLabel(m)) + '</td>' +
               '<td>' + yesNoBadge(m.potentialMentor) + '</td>' +
-              '<td style="max-width:280px;">' + esc(m.remarks || '\u2014') + '</td>' +
+              '<td style="max-width:260px;">' + esc(m.remarks || '\u2014') + '</td>' +
               '</tr>';
           }).join('');
 
       var menteeBlock = own.length
         ? '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);">' +
-          '<table><thead><tr><th>Mentee</th><th>Status</th><th>Potential Mentor</th><th>Remarks</th></tr></thead>' +
+          '<table><thead><tr><th>Mentee</th><th>Status</th><th>Module / Lesson</th><th>Potential Mentor</th><th>Remarks</th></tr></thead>' +
           '<tbody>' + menteeRows + '</tbody></table></div>'
         : '<div class="admin-mentees" style="display:none;border-top:1px solid var(--border);padding:16px 20px;color:var(--text-muted);">No mentees assigned.</div>';
 
