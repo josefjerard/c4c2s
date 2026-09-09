@@ -187,13 +187,21 @@
 
   function computeAge(birthday) {
     if (!birthday) return null;
-    var b = new Date(birthday + 'T00:00:00');
-    if (isNaN(b.getTime())) return null;
+    var b = parseFlexibleDate(birthday);
+    if (!b) return null;
     var now = new Date();
     var age = now.getFullYear() - b.getFullYear();
     var m = now.getMonth() - b.getMonth();
     if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
     return age >= 0 ? age : null;
+  }
+
+  function parseFlexibleDate(value) {
+    if (!value) return null;
+    var d = new Date(String(value) + 'T00:00:00');
+    if (isNaN(d.getTime())) d = new Date(String(value));
+    if (isNaN(d.getTime())) return null;
+    return d;
   }
 
   function moduleLessonLabel(m) {
@@ -273,8 +281,8 @@
 
   function formatDate(iso) {
     if (!iso) return '\u2014';
-    var d = new Date(iso + 'T00:00:00');
-    if (isNaN(d.getTime())) return '\u2014';
+    var d = parseFlexibleDate(iso);
+    if (!d) return '\u2014';
     var opts = { year: 'numeric', month: 'short', day: 'numeric' };
     return d.toLocaleDateString(undefined, opts);
   }

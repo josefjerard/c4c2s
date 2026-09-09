@@ -169,11 +169,19 @@ function getSheetData_(sheetName) {
   for (var i = 1; i < values.length; i++) {
     var obj = {};
     for (var j = 0; j < headers.length; j++) {
-      obj[headers[j]] = values[i][j] != null ? String(values[i][j]) : '';
+      obj[headers[j]] = cellValue_(headers[j], values[i][j]);
     }
     rows.push(obj);
   }
   return rows;
+}
+
+function cellValue_(header, v) {
+  if (header === 'birthday' && v instanceof Date && !isNaN(v.getTime())) {
+    var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    return v.getFullYear() + '-' + pad(v.getMonth() + 1) + '-' + pad(v.getDate());
+  }
+  return v != null ? String(v) : '';
 }
 
 function getMentees_() {
@@ -251,13 +259,15 @@ function updateMenteeRow_(data) {
     if (String(values[i][idCol]) === String(data.id)) {
       for (var j = 0; j < headers.length; j++) {
         if (data.hasOwnProperty(headers[j])) {
-          sheet.getRange(i + 1, j + 1).setValue(data[headers[j]]);
+          var cell = sheet.getRange(i + 1, j + 1);
+          if (headers[j] === 'birthday') cell.setNumberFormat('@');
+          cell.setValue(data[headers[j]]);
         }
       }
       var updated = {};
       var freshRow = sheet.getRange(i + 1, 1, 1, headers.length).getValues()[0];
       for (var k = 0; k < headers.length; k++) {
-        updated[headers[k]] = freshRow[k] != null ? String(freshRow[k]) : '';
+        updated[headers[k]] = cellValue_(headers[k], freshRow[k]);
       }
       return updated;
     }
