@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>C2S Admin Dashboard</title>
+  <title>Mentors - C2S Mentee Management</title>
   <script>
     if (!localStorage.getItem('c2s_session')) {
       window.location.replace('login.html');
@@ -18,14 +18,14 @@
       }
     } catch (_e) {}
   </script>
-  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
       <a href="admin.html" class="brand">
         <span class="brand-logo">C2</span>
-        <span>C2S Admin</span>
+        <span id="pageTitle">Mentors</span>
       </a>
       <div class="topbar-actions"></div>
     </div>
@@ -35,23 +35,18 @@
     <div id="flashMessage"></div>
 
     <div class="hero">
-      <h1>Admin Overview</h1>
+      <h1 id="mentorListTitle">Mentors</h1>
+      <p id="mentorListSubtitle"></p>
     </div>
 
-    <section class="stats" id="adminStats"></section>
-
-    <div class="page-header" style="margin-top:8px;">
-      <h1 style="font-size:1.2rem;">Mentors List</h1>
-    </div>
-
-    <div class="admin-container" id="adminGenderContainer"></div>
+    <div class="admin-container" id="adminTableContainer"></div>
   </main>
 
-  <footer class="footer">C2S Admin System &middot; Admin Dashboard</footer>
+  <footer class="footer">C2S Mentee Management System &middot; Mentors</footer>
 
   <script>
-    window.ADMIN_MODE = true;
+    window.MENTORS_MODE = true;
   </script>
-  <script src="../assets/app.js"></script>
+  <script src="assets/app.js"></script>
 </body>
 </html>
