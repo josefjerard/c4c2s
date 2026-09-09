@@ -1151,6 +1151,18 @@
       if (event.persisted) window.location.reload();
     });
 
+    var firstVisibility = true;
+    document.addEventListener('visibilitychange', function () {
+      if (firstVisibility) { firstVisibility = false; return; }
+      if (document.hidden || window.AUTH_PAGE) return;
+      if (window.ADMIN_MODE && document.getElementById('adminGenderContainer')) { renderAdmin(); return; }
+      if (window.MENTORS_MODE && document.getElementById('adminTableContainer')) { renderMentorsPage(); return; }
+      if (document.getElementById('detailName')) { renderView(); return; }
+      if (document.getElementById('statsRow') || document.getElementById('tableContainer')) {
+        fetchMentees().then(function () { renderStats(); renderTable(); });
+      }
+    });
+
     if (!GAS_URL) {
       flash('Google Apps Script URL not configured. Please set GAS_URL in app.js.', 'danger');
       return;
