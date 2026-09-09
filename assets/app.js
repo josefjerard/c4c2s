@@ -47,12 +47,11 @@
   function apiPost(action, body) {
     return fetchWithTimeout(GAS_URL, {
       method: 'POST',
-      mode: 'no-cors',
+      mode: 'cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(Object.assign({ action: action }, body))
     }, 20000)
       .then(function (r) {
-        if (r && r.type === 'opaque') return { success: true, data: null };
         return r.json();
       })
       .then(function (res) {

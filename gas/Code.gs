@@ -360,12 +360,15 @@ function sendNotification_(subject, body) {
 function testDirect() {
   var settings = getSettings_();
   var to = String(settings.notifyEmail || '').trim();
-  if (!to) return 'No recipient email saved. Save it first.';
+  if (!to) {
+    Logger.log('No recipient email saved. Save it first.');
+    return;
+  }
   try {
     MailApp.sendEmail(to, '[C2S] Direct Test', 'Direct test from the Apps Script editor.');
-    return 'Email sent successfully to ' + to;
+    Logger.log('Email sent successfully to ' + to);
   } catch (err) {
-    return 'FAILED: ' + err.message;
+    Logger.log('FAILED: ' + err.message);
   }
 }
 
