@@ -276,7 +276,7 @@
     if (el) el.innerHTML = '<div class="empty-state"><p>Loading...</p></div>';
   }
 
-  /* ---------- Dashboard (index.html) ---------- */
+  /* ---------- Dashboard (dashboard.html) ---------- */
 
   function initials(name) {
     if (!name) return '?';
@@ -352,7 +352,7 @@
     if (!confirm('Are you sure you want to delete "' + (m.name || 'this mentee') + '"? This cannot be undone.')) return;
     deleteMentee(id).then(function () {
       flash('Mentee deleted successfully.', 'success');
-      setTimeout(function () { window.location.href = 'index.html'; }, 600);
+      setTimeout(function () { window.location.href = 'dashboard.html'; }, 600);
     }).catch(function (err) {
       flash('Failed to delete: ' + err.message, 'danger');
     });
@@ -386,7 +386,7 @@
 
     if (window.EDIT_MODE) {
       if (!urlId) {
-        window.location.href = 'index.html';
+        window.location.href = 'dashboard.html';
         return;
       }
       editId = urlId;
@@ -467,7 +467,7 @@
           addMentee(data).then(function () {
             done();
             flash('Mentee added successfully.', 'success');
-            setTimeout(function () { window.location.href = 'index.html'; }, 600);
+            setTimeout(function () { window.location.href = 'dashboard.html'; }, 600);
           }).catch(function (err) {
             done();
             flash('Failed to add: ' + err.message, 'danger');
@@ -502,7 +502,7 @@
       var m = getMenteeById(id);
       if (!m) {
         nameEl.textContent = 'Mentee not found';
-        document.getElementById('detailContent').innerHTML = '<div class="empty-state"><h3>Mentee not found</h3><p>The mentee may have been deleted.</p><a href="index.html" class="btn btn-outline">&larr; Back to Dashboard</a></div>';
+        document.getElementById('detailContent').innerHTML = '<div class="empty-state"><h3>Mentee not found</h3><p>The mentee may have been deleted.</p><a href="dashboard.html" class="btn btn-outline">&larr; Back to Dashboard</a></div>';
         return;
       }
 
@@ -554,7 +554,7 @@
       document.getElementById('detailContent').innerHTML =
         '<div class="empty-state"><h3>Unable to load mentee details</h3>' +
         '<p>' + esc(err && err.message ? err.message : 'There was a problem connecting to the server.') + '</p>' +
-        '<a href="index.html" class="btn btn-outline">&larr; Back to Dashboard</a></div>';
+        '<a href="dashboard.html" class="btn btn-outline">&larr; Back to Dashboard</a></div>';
     });
   }
 
@@ -1048,13 +1048,13 @@
                 if (idx2 === -1) { done(); flash('No account found with that Worker ID.', 'danger'); return; }
                 if (_mentors[idx2].password !== password) { done(); flash('Incorrect password.', 'danger'); return; }
                 var m2 = _mentors[idx2];
-                setSessionUser({ workerID: m2.workerID, name: m2.name, gender: m2.gender || '' }, 'index.html');
+                setSessionUser({ workerID: m2.workerID, name: m2.name, gender: m2.gender || '' }, 'dashboard.html');
               });
               return;
             }
             if (_mentors[idx].password !== password) { done(); flash('Incorrect password.', 'danger'); return; }
             var m = _mentors[idx];
-            setSessionUser({ workerID: m.workerID, name: m.name, gender: m.gender || '' }, 'index.html');
+            setSessionUser({ workerID: m.workerID, name: m.name, gender: m.gender || '' }, 'dashboard.html');
           });
         });
       });

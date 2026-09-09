@@ -8,9 +8,9 @@ GitHub Pages: https://josefjerard.github.io/c4c2s/
 
 ## Pages
 
-- **Login** (`login.html`) — mentors sign in with their Worker ID and password. Worker ID `1990` / password opens the admin dashboard.
+- **Landing / Login** (`index.html` redirects to `login.html`) — the default page is the sign-in form. Mentors sign in with their Worker ID and password. Worker ID `1990` / password opens the admin dashboard.
 - **Register** (`register.html`) — create a mentor account (Full Name, Gender, Worker ID, Password, Confirm Password). Worker ID must be unique.
-- **Mentor app** (`index.html`) — the per-mentor mentee workspace: dashboard stats, live search, status filter, mentee table (name, status, potential mentor, remarks).
+- **Mentor app** (`dashboard.html`) — the per-mentor mentee workspace: dashboard stats, live search, status filter, mentee table (name, status, potential mentor, remarks).
 - **Add / Edit mentee** (`create.html`, `edit.html`) — full mentee form.
 - **Mentee details** (`view.html`) — view-only detail of a mentee (all fields).
 - **Admin dashboard** (`admin.html`) — shows total mentors, total mentees, and total members, plus clickable **GWAPO** (male) and **GORGEOUS** (female) cards that link to the mentor lists.
@@ -45,7 +45,8 @@ The Apps Script endpoint is configured as `GAS_URL` in `assets/app.js`. Mentors/
 
 ```
 C2S/
-├── index.html          Mentor dashboard (list, search, filter)
+├── index.html          Redirects to the login page (default entry)
+├── dashboard.html      Mentor dashboard (list, search, filter)
 ├── create.html         Add mentee form
 ├── edit.html           Edit mentee form
 ├── view.html           Mentee detail (read-only when accessed from admin)

@@ -4,20 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register - C2S Mentee Management</title>
-  <script>
-    if (localStorage.getItem('c2s_session')) {
-      try {
-        var _u = JSON.parse(localStorage.getItem('c2s_session'));
-        window.location.replace(String(_u.workerID) === '1990' ? 'admin.html' : 'index.html');
-      } catch (e) { window.location.replace('index.html'); }
-    }
-  </script>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <a href="index.html" class="brand">
+      <a href="dashboard.html" class="brand">
         <span class="brand-logo">C2</span>
         <span>C2S Mentee Management</span>
       </a>
