@@ -890,7 +890,7 @@
 
   function getSessionUser() {
     try {
-      var raw = localStorage.getItem(SESSION_KEY);
+      var raw = sessionStorage.getItem(SESSION_KEY);
       return raw ? JSON.parse(raw) : null;
     } catch (e) {
       return null;
@@ -898,12 +898,12 @@
   }
 
   function setSessionUser(user, redirect) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
     if (redirect) window.location.href = redirect;
   }
 
   function clearSession() {
-    localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_KEY);
   }
 
   function isAdmin(user) {
