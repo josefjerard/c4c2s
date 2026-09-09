@@ -390,7 +390,7 @@
 
     var contactEl = document.getElementById('contact');
     contactEl.addEventListener('input', function () {
-      contactEl.value = contactEl.value.replace(/[^\d+\-\s()]/g, '');
+      contactEl.value = contactEl.value.replace(/[^\d]/g, '');
     });
 
     var editId = null;

@@ -201,6 +201,11 @@ function appendRow_(sheetName, headers, data) {
   }
   var row = headers.map(function (h) { return data[h] || ''; });
   sheet.appendRow(row);
+  var lastRow = sheet.getLastRow();
+  var birthdayCol = headers.indexOf('birthday') + 1;
+  var contactCol = headers.indexOf('contact') + 1;
+  if (birthdayCol > 0) sheet.getRange(lastRow, birthdayCol).setNumberFormat('@');
+  if (contactCol > 0) sheet.getRange(lastRow, contactCol).setNumberFormat('@');
 }
 
 function updateMentorRow_(data) {
@@ -260,7 +265,7 @@ function updateMenteeRow_(data) {
       for (var j = 0; j < headers.length; j++) {
         if (data.hasOwnProperty(headers[j])) {
           var cell = sheet.getRange(i + 1, j + 1);
-          if (headers[j] === 'birthday') cell.setNumberFormat('@');
+          if (headers[j] === 'birthday' || headers[j] === 'contact') cell.setNumberFormat('@');
           cell.setValue(data[headers[j]]);
         }
       }
