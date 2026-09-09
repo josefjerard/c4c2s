@@ -193,6 +193,12 @@ a:hover {
   border-radius: var(--radius);
   padding: 18px;
   box-shadow: var(--shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
 .stat-card .stat-label {
@@ -213,6 +219,12 @@ a:hover {
 .stat-card.active .stat-value { color: var(--success); }
 .stat-card.inactive .stat-value { color: var(--text-muted); }
 .stat-card.transferred .stat-value { color: var(--warning); }
+
+#adminGenderContainer .stat-card:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15), var(--shadow-lg);
+}
 
 /* Toolbar / filters */
 .toolbar {
