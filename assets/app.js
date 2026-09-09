@@ -517,7 +517,8 @@
       nameEl.textContent = m.name || 'Untitled';
       document.getElementById('detailMeta').textContent =
         (m.mentor ? 'Mentor: @' + m.mentor : '') +
-        (m.createdAt ? '  \u00B7  Added ' + new Date(m.createdAt).toLocaleDateString() : '');
+        (m.createdAt ? '  \u00B7  Added ' + new Date(m.createdAt).toLocaleDateString() : '') +
+        (m.updatedAt ? '  \u00B7  Updated ' + new Date(m.updatedAt).toLocaleString() : '');
       document.getElementById('statusBadge').className = 'badge ' + statusBadgeClass(m.status);
       document.getElementById('statusBadge').textContent = m.status;
 
@@ -545,9 +546,9 @@
         if (deleteBtn) deleteBtn.style.display = 'none';
       } else {
         document.getElementById('editBtn').href = 'edit.html?id=' + encodeURIComponent(m.id);
-        document.getElementById('deleteBtn').addEventListener('click', function () {
+        deleteBtn.onclick = function () {
           handleDelete(m.id);
-        });
+        };
       }
     }).catch(function (err) {
       nameEl.textContent = 'Unable to load mentee';
