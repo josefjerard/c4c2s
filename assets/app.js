@@ -1150,6 +1150,10 @@
 
     if (!requireAuth()) return;
 
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted) window.location.reload();
+    });
+
     if (!GAS_URL) {
       flash('Google Apps Script URL not configured. Please set GAS_URL in app.js.', 'danger');
       return;
