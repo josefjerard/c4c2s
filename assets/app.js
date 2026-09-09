@@ -1013,6 +1013,20 @@
     }
   }
 
+  function renderBrand() {
+    var user = getSessionUser();
+    var link = document.querySelector('.brand');
+    if (!link) return;
+    var text = link.querySelector('span:last-child');
+    if (user && isAdmin(user)) {
+      link.setAttribute('href', 'admin.html');
+      if (text) text.textContent = 'Admin';
+    } else if (user) {
+      link.setAttribute('href', 'dashboard.html');
+      if (text) text.textContent = 'Mentee Management';
+    }
+  }
+
   function requireAuth() {
     var user = getSessionUser();
     var protectedPage = !/login\.html|register\.html/.test(window.location.pathname);
@@ -1125,6 +1139,7 @@
     if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
 
     renderNav();
+    renderBrand();
     bindAuth();
 
     if (window.AUTH_PAGE) return;
