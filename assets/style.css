@@ -196,7 +196,8 @@ a:hover {
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
-.stat-card:hover {
+.stat-card:hover,
+.stat-card:active {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
 }
@@ -220,7 +221,9 @@ a:hover {
 .stat-card.inactive .stat-value { color: var(--text-muted); }
 .stat-card.transferred .stat-value { color: var(--warning); }
 
-#adminGenderContainer .stat-card:hover {
+#adminGenderContainer .stat-card:hover,
+#adminGenderContainer .stat-card:active,
+#adminGenderContainer .stat-card:focus {
   border-color: var(--primary);
   background: var(--primary-soft);
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15), var(--shadow-lg);
