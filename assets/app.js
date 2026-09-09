@@ -382,9 +382,7 @@
 
     var contactEl = document.getElementById('contact');
     contactEl.addEventListener('input', function () {
-      var digits = contactEl.value.replace(/\D/g, '');
-      if (digits.length > 1 && digits.slice(0, 2) !== '09') digits = '09' + digits.replace(/^09/, '');
-      contactEl.value = digits.slice(0, 11);
+      contactEl.value = contactEl.value.replace(/[^\d+\-\s()]/g, '');
     });
 
     var editId = null;
@@ -429,10 +427,9 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var name = document.getElementById('name').value.trim();
-      var contact = (document.getElementById('contact').value || '').replace(/\D/g, '');
+      var contact = (document.getElementById('contact').value || '').trim();
 
       if (!name) { flash('Mentee name is required.', 'danger'); document.getElementById('name').focus(); return; }
-      if (contact && !/^09\d{9}$/.test(contact)) { flash('Contact number must be exactly 11 digits starting with 09.', 'danger'); document.getElementById('contact').focus(); return; }
 
       var moduleLessonVal = document.getElementById('moduleLesson').value;
       var moduleParts = moduleLessonVal.split('|');

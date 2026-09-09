@@ -96,6 +96,7 @@ function doPost(e) {
     } else if (action === 'updateMentee') {
       var updateData = body.data;
       var updated = updateMenteeRow_(updateData);
+      if (!updated) throw new Error('Mentee not found. It may have been deleted.');
       output = { success: true, data: updated };
       sendNotification_(
         'Mentee updated',
