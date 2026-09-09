@@ -116,8 +116,28 @@
 
   /* ---------- Theming ---------- */
 
+  function themeKeyFor(workerID) {
+    return workerID ? THEME_KEY + '_' + workerID : THEME_KEY;
+  }
+
+  function isAuthPage() {
+    return !!(window.AUTH_PAGE && /login|register/.test(String(window.AUTH_PAGE)));
+  }
+
+  function currentThemeMode() {
+    var user = getSessionUser();
+    var mode;
+    if (isAuthPage() || !user) {
+      mode = 'light';
+    } else {
+      try { mode = localStorage.getItem(themeKeyFor(user.workerID)); } catch (e) {}
+      mode = mode || 'light';
+    }
+    return mode;
+  }
+
   function applyTheme() {
-    var current = localStorage.getItem(THEME_KEY) || 'light';
+    var current = currentThemeMode();
     document.documentElement.setAttribute('data-theme', current);
     var icon = document.querySelector('.theme-icon');
     if (icon) icon.textContent = current === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19';
@@ -126,13 +146,15 @@
   }
 
   function setTheme(mode) {
-    localStorage.setItem(THEME_KEY, mode);
+    var user = getSessionUser();
+    if (!isAuthPage() && user) {
+      try { localStorage.setItem(themeKeyFor(user.workerID), mode); } catch (e) {}
+    }
     applyTheme();
   }
 
   function toggleTheme() {
-    var current = localStorage.getItem(THEME_KEY) || 'light';
-    setTheme(current === 'dark' ? 'light' : 'dark');
+    setTheme(currentThemeMode() === 'dark' ? 'light' : 'dark');
   }
 
   /* ---------- Helpers ---------- */
@@ -197,6 +219,19 @@
       var f = JSON.parse(raw);
       flash(f.message, f.type);
     } catch (e) {}
+  }
+
+  function reloadAtTop(delay) {
+    var fn = function () {
+      try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
+      var doc = document.documentElement;
+      var body = document.body;
+      doc.scrollTop = 0;
+      body.scrollTop = 0;
+      window.scrollTo(0, 0);
+      window.location.reload();
+    };
+    if (delay) setTimeout(fn, delay); else fn();
   }
 
   function setFormBusy(form, busy, busyText) {
@@ -645,11 +680,7 @@
             setSaving(false);
             flash('Account updated successfully.', 'success');
             persistFlash('Account updated successfully.', 'success');
-            setTimeout(function () {
-              if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-              window.scrollTo(0, 0);
-              window.location.reload();
-            }, 700);
+            reloadAtTop(700);
           });
         });
       }
@@ -823,18 +854,10 @@
         } else {
           persistFlash('Email notification settings saved.', 'success');
         }
-        setTimeout(function () {
-          if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-          window.scrollTo(0, 0);
-          window.location.reload();
-        }, 700);
+        reloadAtTop(700);
       }).catch(function (err) {
         persistFlash('Failed to save settings: ' + err.message, 'danger');
-        setTimeout(function () {
-          if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-          window.scrollTo(0, 0);
-          window.location.reload();
-        }, 700);
+        reloadAtTop(700);
       });
     });
 
@@ -1087,7 +1110,11 @@
   /* ---------- Init ---------- */
 
   function init() {
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
+    var doc = document.documentElement;
+    var body = document.body;
+    doc.scrollTop = 0;
+    body.scrollTop = 0;
     window.scrollTo(0, 0);
 
     applyPendingFlash();
