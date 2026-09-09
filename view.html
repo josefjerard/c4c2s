@@ -9,6 +9,15 @@
       window.location.replace('login.html');
     }
   </script>
+  <script>
+    try {
+      var _s = JSON.parse(localStorage.getItem('c2s_session') || 'null');
+      if (_s && _s.workerID) {
+        var _t = localStorage.getItem('c2s_theme_' + _s.workerID);
+        if (_t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (_e) {}
+  </script>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
