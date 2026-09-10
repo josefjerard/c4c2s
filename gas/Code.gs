@@ -79,7 +79,21 @@ function doPost(e) {
   var action = body.action;
 
   try {
-    if (action === 'addMentee') {
+    if (action === 'getMentees') {
+      output = { success: true, data: getMentees_() };
+    } else if (action === 'getMentors') {
+      output = { success: true, data: getMentors_() };
+    } else if (action === 'getMentee') {
+      var gid = (body.data && body.data.id) || body.id || null;
+      var gall = getMentees_();
+      var gfound = null;
+      for (var gi = 0; gi < gall.length; gi++) {
+        if (gall[gi].id === gid) { gfound = gall[gi]; break; }
+      }
+      output = { success: true, data: gfound };
+    } else if (action === 'getSettings') {
+      output = { success: true, data: getSettings_() };
+    } else if (action === 'addMentee') {
       var newMentee = body.data;
       newMentee.id = newMentee.id || generateId_();
       newMentee.createdAt = newMentee.createdAt || new Date().toISOString();

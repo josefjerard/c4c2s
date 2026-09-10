@@ -29,19 +29,21 @@
     });
   }
 
-  function apiGet(action, params) {
-    var url = GAS_URL + '?action=' + encodeURIComponent(action) + '&_t=' + Date.now();
-    if (params) {
-      Object.keys(params).forEach(function (k) {
-        url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-      });
-    }
-    return fetchWithTimeout(url, null, 20000)
-      .then(function (r) { return r.json(); })
-      .then(function (res) {
-        if (!res.success) throw new Error(res.error || 'API error');
-        return res.data;
-      });
+  var MENTEES_CACHE_KEY = 'c2s_mentees';
+
+  function loadCachedMentees() {
+    try {
+      var raw = localStorage.getItem(MENTEES_CACHE_KEY);
+      var list = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(list)) return list;
+    } catch (e) {}
+    return [];
+  }
+
+  function saveCachedMentees(list) {
+    try {
+      localStorage.setItem(MENTEES_CACHE_KEY, JSON.stringify(list || []));
+    } catch (e) {}
   }
 
   function apiPost(action, body) {
@@ -60,18 +62,43 @@
       });
   }
 
+  function apiGet(action, params) {
+    var url = GAS_URL + '?action=' + encodeURIComponent(action) + '&_t=' + Date.now();
+    if (params) {
+      Object.keys(params).forEach(function (k) {
+        url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+      });
+    }
+    return fetchWithTimeout(url, null, 20000)
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (!res.success) throw new Error(res.error || 'API error');
+        return res.data;
+      });
+  }
+
+  function apiRead(action, body) {
+    return apiPost(action, body || {}).catch(function (err) {
+      if (err && /unknown action/i.test(err.message)) {
+        return apiGet(action, (body && body.data) || null);
+      }
+      throw err;
+    });
+  }
+
   function fetchMentees() {
-    return apiGet('getMentees').then(function (data) {
-      _mentees = Array.isArray(data) ? data : [];
+    _mentees = loadCachedMentees();
+    return apiRead('getMentees').then(function (data) {
+      _mentees = Array.isArray(data) ? data : _mentees;
+      saveCachedMentees(_mentees);
       return _mentees;
     }).catch(function () {
-      _mentees = [];
       return _mentees;
     });
   }
 
   function fetchMentors() {
-    return apiGet('getMentors').then(function (data) {
+    return apiRead('getMentors').then(function (data) {
       _mentors = (Array.isArray(data) ? data : []).map(normalizeMentor);
       return _mentors;
     }).catch(function () {
@@ -92,6 +119,7 @@
     data.createdAt = new Date().toISOString();
     return apiPost('addMentee', { data: data }).then(function (saved) {
       _mentees.push(saved);
+      saveCachedMentees(_mentees);
       return saved;
     });
   }
@@ -103,6 +131,7 @@
         _mentees = _mentees.map(function (m) {
           return m.id === updated.id ? updated : m;
         });
+        saveCachedMentees(_mentees);
       }
       return updated;
     });
@@ -111,6 +140,7 @@
   function deleteMentee(id) {
     return apiPost('deleteMentee', { id: id }).then(function () {
       _mentees = _mentees.filter(function (m) { return m.id !== id; });
+      saveCachedMentees(_mentees);
     });
   }
 
@@ -379,6 +409,8 @@
     var form = document.getElementById('menteeForm');
     if (!form) return;
 
+    if (!_mentees.length) _mentees = loadCachedMentees();
+
     var birthdayEl = document.getElementById('birthday');
     var ageEl = document.getElementById('age');
 
@@ -394,8 +426,31 @@
     });
 
     var editId = null;
+    var formLoaded = false;
+    var savedMentor = '';
     var urlParams = new URLSearchParams(window.location.search);
     var urlId = urlParams.get('id');
+
+    function populateForm(existing) {
+      document.getElementById('name').value = existing.name || '';
+      setSelectValue(document.getElementById('status'), existing.status || 'Active');
+      document.getElementById('contact').value = existing.contact || '';
+      document.getElementById('birthday').value = existing.birthday || '';
+      document.getElementById('address').value = existing.address || '';
+      setSelectValue(document.getElementById('cldp1'), existing.cldp1 || 'Unenrolled');
+      setSelectValue(document.getElementById('cldp2'), existing.cldp2 || 'Unenrolled');
+      setSelectValue(document.getElementById('cldp3'), existing.cldp3 || 'Unenrolled');
+      var existingModuleVal = (existing.module && existing.moduleLesson)
+        ? (existing.module + '|' + existing.moduleLesson)
+        : (existing.moduleLesson || existing.module || '');
+      setSelectValue(document.getElementById('moduleLesson'), existingModuleVal);
+      setSelectValue(document.getElementById('potentialMentor'), existing.potentialMentor || 'No');
+      setSelectValue(document.getElementById('c2s101'), existing.c2s101 || 'Not yet taken');
+      document.getElementById('otherTrainings').value = existing.otherTrainings || '';
+      document.getElementById('remarks').value = existing.remarks || '';
+      updateAge();
+      document.title = 'Edit Mentee - C2S Mentee Management';
+    }
 
     if (window.EDIT_MODE) {
       if (!urlId) {
@@ -404,36 +459,35 @@
       }
       editId = urlId;
 
+      var cached = getMenteeById(editId);
+      if (cached) {
+        populateForm(cached);
+        formLoaded = true;
+        savedMentor = cached.mentor || '';
+      }
+
       fetchMentees().then(function () {
-        var existing = getMenteeById(editId);
-        if (!existing) {
+        var fresh = getMenteeById(editId);
+        if (!fresh) {
+          formLoaded = false;
           flash('Mentee not found.', 'danger');
           document.getElementById('editTitle').textContent = 'Mentee not found';
           return;
         }
-        document.getElementById('name').value = existing.name || '';
-        document.getElementById('status').value = existing.status || 'Active';
-        document.getElementById('contact').value = existing.contact || '';
-        document.getElementById('birthday').value = existing.birthday || '';
-        document.getElementById('address').value = existing.address || '';
-        document.getElementById('cldp1').value = existing.cldp1 || 'Unenrolled';
-        document.getElementById('cldp2').value = existing.cldp2 || 'Unenrolled';
-        document.getElementById('cldp3').value = existing.cldp3 || 'Unenrolled';
-        var existingModuleVal = (existing.module && existing.moduleLesson)
-          ? (existing.module + '|' + existing.moduleLesson)
-          : (existing.moduleLesson || existing.module || '');
-        setSelectValue(document.getElementById('moduleLesson'), existingModuleVal);
-        document.getElementById('potentialMentor').value = existing.potentialMentor || 'No';
-        document.getElementById('c2s101').value = existing.c2s101 || 'Not yet taken';
-        document.getElementById('otherTrainings').value = existing.otherTrainings || '';
-        document.getElementById('remarks').value = existing.remarks || '';
-        updateAge();
-        document.title = 'Edit Mentee - C2S Mentee Management';
+        populateForm(fresh);
+        formLoaded = true;
+        savedMentor = fresh.mentor || '';
       });
     }
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
+
+      if (editId && !formLoaded) {
+        flash('Could not load the mentee\'s existing details. Refresh the page and try again.', 'danger');
+        return;
+      }
+
       var name = document.getElementById('name').value.trim();
       var contact = (document.getElementById('contact').value || '').trim();
 
@@ -464,7 +518,7 @@
       setFormBusyAndRun(form, 'Saving...', function (done) {
         if (editId) {
           data.id = editId;
-          data.mentor = (getMenteeById(editId) || {}).mentor || '';
+          data.mentor = savedMentor || '';
           updateMentee(data).then(function () {
             done();
             flash('Mentee updated successfully.', 'success');
@@ -498,6 +552,12 @@
       var opt = select.options[j];
       if (opt.text === value) { select.selectedIndex = j; return; }
     }
+    var extra = document.createElement('option');
+    extra.value = value;
+    extra.text = value;
+    extra.setAttribute('selected', 'selected');
+    select.insertBefore(extra, select.options[0]);
+    select.selectedIndex = 0;
   }
 
   /* ---------- View page ---------- */
@@ -508,8 +568,17 @@
     var nameEl = document.getElementById('detailName');
     if (!nameEl) return;
 
-    apiGet('getMentees').then(function (data) {
-      _mentees = Array.isArray(data) ? data : [];
+    if (!_mentees.length) _mentees = loadCachedMentees();
+    var cachedM = getMenteeById(id);
+    if (cachedM) {
+      drawView(cachedM, urlParams);
+    } else {
+      showLoading(document.getElementById('detailContent'));
+    }
+
+    apiRead('getMentees').then(function (data) {
+      _mentees = Array.isArray(data) ? data : _mentees;
+      saveCachedMentees(_mentees);
 
       var m = getMenteeById(id);
       if (!m) {
@@ -517,54 +586,59 @@
         document.getElementById('detailContent').innerHTML = '<div class="empty-state"><h3>Mentee not found</h3><p>The mentee may have been deleted.</p><a href="dashboard.html" class="btn btn-outline">&larr; Back to Dashboard</a></div>';
         return;
       }
-
-      var age = computeAge(m.birthday);
-      var moduleLabel = moduleLessonLabel(m);
-
-      document.getElementById('avatar').textContent = initials(m.name);
-      nameEl.textContent = m.name || 'Untitled';
-      document.getElementById('detailMeta').textContent =
-        (m.mentor ? 'Mentor: @' + m.mentor : '') +
-        (m.createdAt ? '  \u00B7  Added ' + new Date(m.createdAt).toLocaleDateString() : '') +
-        (m.updatedAt ? '  \u00B7  Updated ' + new Date(m.updatedAt).toLocaleString() : '');
-      document.getElementById('statusBadge').className = 'badge ' + statusBadgeClass(m.status);
-      document.getElementById('statusBadge').textContent = m.status;
-
-      var grid = document.getElementById('detailGrid');
-      grid.innerHTML =
-        item('Status', esc(m.status)) +
-        item('Contact Number', esc(m.contact || '\u2014')) +
-        item('Birthday', m.birthday ? formatDate(m.birthday) : '\u2014') +
-        item('Age', age === null ? '\u2014' : (age + ' years')) +
-        item('Address', esc(m.address || '\u2014')) +
-        item('Potential Mentor', yesNoBadge(m.potentialMentor)) +
-        item('CLDP 1', trainingBadge(m.cldp1)) +
-        item('CLDP 2', trainingBadge(m.cldp2)) +
-        item('CLDP 3', trainingBadge(m.cldp3)) +
-        item('Module / Lesson', esc(moduleLabel)) +
-        item('C2S 101', esc(m.c2s101 || '\u2014')) +
-        item('Other Trainings', esc(m.otherTrainings || '\u2014')) +
-        item('Remarks', esc(m.remarks || '\u2014'), true);
-
-      var readonly = urlParams.get('readonly') === '1';
-      var editBtn = document.getElementById('editBtn');
-      var deleteBtn = document.getElementById('deleteBtn');
-      if (readonly) {
-        if (editBtn) editBtn.style.display = 'none';
-        if (deleteBtn) deleteBtn.style.display = 'none';
-      } else {
-        document.getElementById('editBtn').href = 'edit.html?id=' + encodeURIComponent(m.id);
-        deleteBtn.onclick = function () {
-          handleDelete(m.id);
-        };
-      }
+      drawView(m, urlParams);
     }).catch(function (err) {
+      if (cachedM) return;
       nameEl.textContent = 'Unable to load mentee';
       document.getElementById('detailContent').innerHTML =
         '<div class="empty-state"><h3>Unable to load mentee details</h3>' +
         '<p>' + esc(err && err.message ? err.message : 'There was a problem connecting to the server.') + '</p>' +
         '<a href="dashboard.html" class="btn btn-outline">&larr; Back to Dashboard</a></div>';
     });
+  }
+
+  function drawView(m, urlParams) {
+    var nameEl = document.getElementById('detailName');
+    var age = computeAge(m.birthday);
+    var moduleLabel = moduleLessonLabel(m);
+
+    document.getElementById('avatar').textContent = initials(m.name);
+    nameEl.textContent = m.name || 'Untitled';
+    document.getElementById('detailMeta').textContent =
+      (m.mentor ? 'Mentor: @' + m.mentor : '') +
+      (m.createdAt ? '  \u00B7  Added ' + new Date(m.createdAt).toLocaleDateString() : '') +
+      (m.updatedAt ? '  \u00B7  Updated ' + new Date(m.updatedAt).toLocaleString() : '');
+    document.getElementById('statusBadge').className = 'badge ' + statusBadgeClass(m.status);
+    document.getElementById('statusBadge').textContent = m.status;
+
+    var grid = document.getElementById('detailGrid');
+    grid.innerHTML =
+      item('Status', esc(m.status)) +
+      item('Contact Number', esc(m.contact || '\u2014')) +
+      item('Birthday', m.birthday ? formatDate(m.birthday) : '\u2014') +
+      item('Age', age === null ? '\u2014' : (age + ' years')) +
+      item('Address', esc(m.address || '\u2014')) +
+      item('Potential Mentor', yesNoBadge(m.potentialMentor)) +
+      item('CLDP 1', trainingBadge(m.cldp1)) +
+      item('CLDP 2', trainingBadge(m.cldp2)) +
+      item('CLDP 3', trainingBadge(m.cldp3)) +
+      item('Module / Lesson', esc(moduleLabel)) +
+      item('C2S 101', esc(m.c2s101 || '\u2014')) +
+      item('Other Trainings', esc(m.otherTrainings || '\u2014')) +
+      item('Remarks', esc(m.remarks || '\u2014'), true);
+
+    var readonly = urlParams.get('readonly') === '1';
+    var editBtn = document.getElementById('editBtn');
+    var deleteBtn = document.getElementById('deleteBtn');
+    if (readonly) {
+      if (editBtn) editBtn.style.display = 'none';
+      if (deleteBtn) deleteBtn.style.display = 'none';
+    } else {
+      document.getElementById('editBtn').href = 'edit.html?id=' + encodeURIComponent(m.id);
+      deleteBtn.onclick = function () {
+        handleDelete(m.id);
+      };
+    }
   }
 
   function item(label, value, full) {
@@ -667,10 +741,12 @@
             _mentors[idx] = updatedMentor;
 
             if (newWorkerID !== oldWorkerID) {
+              if (!_mentees.length) _mentees = loadCachedMentees();
               _mentees = _mentees.map(function (m) {
                 if (m.mentor === oldWorkerID) { m.mentor = newWorkerID; }
                 return m;
               });
+              saveCachedMentees(_mentees);
             }
 
             saveCachedMentors(_mentors);
@@ -845,7 +921,7 @@
       return { notifyEmail: emailEl.value.trim() };
     }
 
-    apiGet('getSettings').then(applySettings).catch(function () {});
+    apiRead('getSettings').then(applySettings).catch(function () {});
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -856,7 +932,7 @@
       }
       var settings = collectSettings();
       apiPost('saveSettings', { data: settings }).then(function () {
-        return apiGet('getSettings');
+        return apiRead('getSettings');
       }).then(function (saved) {
         var savedEmail = saved ? String(saved.notifyEmail || '').trim() : '';
         if (savedEmail !== email) {
@@ -1178,7 +1254,9 @@
     }
 
     if (document.getElementById('statsRow')) {
-      showLoading(document.getElementById('statsRow'));
+      _mentees = loadCachedMentees();
+      if (_mentees.length) { renderStats(); renderTable(); }
+      else showLoading(document.getElementById('statsRow'));
       fetchMentees().then(function () {
         renderStats();
         renderTable();
@@ -1188,7 +1266,9 @@
         if (filterEl) { filterEl.addEventListener('change', renderTable); filterEl.addEventListener('input', renderTable); }
       });
     } else if (document.getElementById('tableContainer')) {
-      showLoading(document.getElementById('tableContainer'));
+      _mentees = loadCachedMentees();
+      if (_mentees.length) renderTable();
+      else showLoading(document.getElementById('tableContainer'));
       fetchMentees().then(function () {
         renderTable();
         var searchEl = document.getElementById('searchInput');
