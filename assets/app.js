@@ -518,7 +518,7 @@
       setFormBusyAndRun(form, 'Saving...', function (done) {
         if (editId) {
           data.id = editId;
-          data.mentor = savedMentor || '';
+          data.mentor = (savedMentor && String(savedMentor).trim() !== ADMIN_STAFF_ID) ? savedMentor : '';
           updateMentee(data).then(function () {
             done();
             flash('Mentee updated successfully.', 'success');
@@ -529,7 +529,7 @@
           });
         } else {
           var currentUser = getSessionUser();
-          data.mentor = currentUser ? String(currentUser.workerID || '') : '';
+          data.mentor = (currentUser && !isAdmin(currentUser)) ? String(currentUser.workerID || '') : '';
           addMentee(data).then(function () {
             done();
             flash('Mentee added successfully.', 'success');
