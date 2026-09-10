@@ -832,11 +832,15 @@
     });
   }
 
+  var _mentorsGenderData = { mentors: [], mentees: [], gender: '' };
+  var _mentorSearchBound = false;
+
   function renderMentorsPage() {
     var tableEl = document.getElementById('adminTableContainer');
     var titleEl = document.getElementById('mentorListTitle');
     var subEl = document.getElementById('mentorListSubtitle');
     var pageTitle = document.getElementById('pageTitle');
+    var searchEl = document.getElementById('mentorSearchInput');
     if (!tableEl) return;
 
     var params = new URLSearchParams(window.location.search);
@@ -847,22 +851,36 @@
     if (pageTitle) pageTitle.textContent = title;
     if (subEl) subEl.textContent = '';
 
-    showLoading(tableEl);
-
-    Promise.all([fetchMentors(), fetchMentees()]).then(function () {
-      var mentors = getMentors().filter(function (mn) { return mn.workerID !== ADMIN_STAFF_ID; });
-      var mentees = getMentees();
-      var filtered = mentors.filter(function (mn) {
-        return String(mn.gender || '').toLowerCase() === gender.toLowerCase();
+    function drawMentors() {
+      var query = searchEl ? searchEl.value.trim().toLowerCase() : '';
+      var filtered = _mentorsGenderData.mentors.filter(function (mn) {
+        var matchGender = String(mn.gender || '').toLowerCase() === _mentorsGenderData.gender.toLowerCase();
+        var matchQuery = !query || (mn.name && mn.name.toLowerCase().indexOf(query) !== -1);
+        return matchGender && matchQuery;
       });
 
       if (filtered.length === 0) {
-        tableEl.innerHTML = '<div class="empty-state"><h3>No ' + title + ' mentors</h3><p>No mentors in this category yet.</p></div>';
+        tableEl.innerHTML = '<div class="empty-state"><h3>No ' + esc(title) + ' mentors found</h3><p>' + (query ? 'Try a different search.' : 'No mentors in this category yet.') + '</p></div>';
+        bindMentorExpand();
         return;
       }
 
-      tableEl.innerHTML = buildMentorGroupHtml(filtered, mentees);
+      tableEl.innerHTML = buildMentorGroupHtml(filtered, _mentorsGenderData.mentees);
       bindMentorExpand();
+    }
+
+    if (searchEl && !_mentorSearchBound) {
+      _mentorSearchBound = true;
+      searchEl.addEventListener('input', drawMentors);
+    }
+
+    showLoading(tableEl);
+
+    Promise.all([fetchMentors(), fetchMentees()]).then(function () {
+      _mentorsGenderData.mentors = getMentors().filter(function (mn) { return mn.workerID !== ADMIN_STAFF_ID; });
+      _mentorsGenderData.mentees = getMentees();
+      _mentorsGenderData.gender = gender;
+      drawMentors();
     });
   }
 
@@ -1252,6 +1270,11 @@
       return;
     }
 
+    var searchEl = document.getElementById('searchInput');
+    var filterEl = document.getElementById('statusFilter');
+    if (searchEl) searchEl.addEventListener('input', renderTable);
+    if (filterEl) { filterEl.addEventListener('change', renderTable); filterEl.addEventListener('input', renderTable); }
+
     if (document.getElementById('statsRow')) {
       _mentees = loadCachedMentees();
       if (_mentees.length) { renderStats(); renderTable(); }
@@ -1259,10 +1282,6 @@
       fetchMentees().then(function () {
         renderStats();
         renderTable();
-        var searchEl = document.getElementById('searchInput');
-        var filterEl = document.getElementById('statusFilter');
-        if (searchEl) searchEl.addEventListener('input', renderTable);
-        if (filterEl) { filterEl.addEventListener('change', renderTable); filterEl.addEventListener('input', renderTable); }
       });
     } else if (document.getElementById('tableContainer')) {
       _mentees = loadCachedMentees();
@@ -1270,10 +1289,6 @@
       else showLoading(document.getElementById('tableContainer'));
       fetchMentees().then(function () {
         renderTable();
-        var searchEl = document.getElementById('searchInput');
-        var filterEl = document.getElementById('statusFilter');
-        if (searchEl) searchEl.addEventListener('input', renderTable);
-        if (filterEl) { filterEl.addEventListener('change', renderTable); filterEl.addEventListener('input', renderTable); }
       });
     }
 
