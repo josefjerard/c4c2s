@@ -583,7 +583,7 @@
       var m = getMenteeById(id);
       if (!m) {
         nameEl.textContent = 'Mentee not found';
-        document.getElementById('detailContent').innerHTML = '<div class="empty-state"><h3>Mentee not found</h3><p>The mentee may have been deleted.</p><a href="dashboard.html" class="btn btn-outline">&larr; Back to Dashboard</a></div>';
+        document.getElementById('detailContent').innerHTML = '<div class="empty-state"><h3>Mentee not found</h3><p>The mentee may have been deleted.</p></div>';
         return;
       }
       drawView(m, urlParams);
@@ -592,8 +592,7 @@
       nameEl.textContent = 'Unable to load mentee';
       document.getElementById('detailContent').innerHTML =
         '<div class="empty-state"><h3>Unable to load mentee details</h3>' +
-        '<p>' + esc(err && err.message ? err.message : 'There was a problem connecting to the server.') + '</p>' +
-        '<a href="dashboard.html" class="btn btn-outline">&larr; Back to Dashboard</a></div>';
+        '<p>' + esc(err && err.message ? err.message : 'There was a problem connecting to the server.') + '</p></div>';
     });
   }
 
