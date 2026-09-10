@@ -913,8 +913,8 @@
       }
 
       tableEl.innerHTML = '<section class="stats" style="margin-bottom:0;">' +
-        genderCard('GWAPO MENTORS', males.length, 'mentors.html?gender=male', 'total') +
-        genderCard('GORGEOUS MENTORS', females.length, 'mentors.html?gender=female', 'active') +
+        genderCard('GWAPO MENTORS', males.length, 'mentors.html?gender=male', 'gender-male') +
+        genderCard('GORGEOUS MENTORS', females.length, 'mentors.html?gender=female', 'gender-female') +
         '</section>';
     });
   }
@@ -1237,9 +1237,6 @@
     applyPendingFlash();
 
     applyTheme();
-
-    var themeBtn = document.getElementById('themeToggle');
-    if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
 
     renderNav();
     renderBrand();

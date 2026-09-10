@@ -10,7 +10,7 @@
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <a href="dashboard.html" class="brand">
+      <a href="login.html" class="brand">
         <span class="brand-logo"><img src="images/c2s.png?v=2" alt="C2S"></span>
         <span>Mentee Management</span>
       </a>
@@ -32,7 +32,8 @@
 
         <div class="form-group">
           <label for="regGender">Gender <span class="req">*</span></label>
-          <select id="regGender" name="regGender">
+          <select id="regGender" name="regGender" required>
+            <option value="">Select...</option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
           </select>

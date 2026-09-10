@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - C2S Mentee Management</title>
+  <link rel="stylesheet" href="assets/style.css?v=3">
   <script>
     if (!sessionStorage.getItem('c2s_session')) {
       window.location.replace('login.html');
@@ -18,8 +19,6 @@
       }
     } catch (_e) {}
   </script>
-  <link rel="icon" type="image/png" href="images/c2s.png?v=2">
-  <link rel="stylesheet" href="assets/style.css?v=3">
 </head>
 <body>
   <header class="topbar">
@@ -46,9 +45,9 @@
       <div class="toolbar-right">
         <div class="search-box">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" id="searchInput" placeholder="Search mentees by name or contact...">
+          <input type="text" id="searchInput" placeholder="Search mentees by name or contact..." aria-label="Search mentees by name or contact">
         </div>
-        <select id="statusFilter" class="select-inline">
+        <select id="statusFilter" class="select-inline" aria-label="Filter by status">
           <option value="">All statuses</option>
           <option value="Active">Active</option>
           <option value="Inactive">Inactive</option>

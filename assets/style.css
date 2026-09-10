@@ -220,6 +220,36 @@ a:hover {
   margin-top: 6px;
 }
 
+.gender-male {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.gender-male .stat-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.gender-male .stat-value {
+  color: #1d4ed8;
+}
+
+.gender-female {
+  background: #fce7f3;
+  border-color: #f9a8d4;
+}
+
+.gender-female .stat-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #be185d;
+}
+
+.gender-female .stat-value {
+  color: #be185d;
+}
+
 .stat-card.total .stat-value { color: var(--primary); }
 .stat-card.active .stat-value { color: var(--success); }
 .stat-card.inactive .stat-value { color: var(--text-muted); }
@@ -747,6 +777,10 @@ td .mentee-sub {
 
 .admin-mentees {
   overflow-x: auto;
+}
+
+.admin-container {
+  margin-top: 16px;
 }
 
 /* Toggle switch */
