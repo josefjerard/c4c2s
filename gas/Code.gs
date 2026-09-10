@@ -101,10 +101,10 @@ function doPost(e) {
       output = { success: true, data: newMentee };
       sendNotification_(
         'New mentee added',
-        'A mentee was added to the system by mentor "' + (newMentee.mentor || 'Unknown') + '".\n\n' +
-          'Name: ' + newMentee.name + '\n' +
-          'Status: ' + newMentee.status + '\n' +
-          'Mentor: ' + newMentee.mentor
+        'A mentee was added to the system.\n\n' +
+          'Mentor Worker ID: ' + (newMentee.mentor || '\u2014') + '\n' +
+          'Mentor Name: ' + mentorNameFor_(newMentee.mentor) + '\n' +
+          'Mentee Name: ' + newMentee.name
       );
 
     } else if (action === 'updateMentee') {
@@ -114,16 +114,30 @@ function doPost(e) {
       output = { success: true, data: updated };
       sendNotification_(
         'Mentee updated',
-        'A mentee was updated by mentor "' + (updateData.mentor || 'Unknown') + '".\n\n' +
-          'Name: ' + (updated ? updated.name : updateData.name) + '\n' +
-          'Status: ' + (updated ? updated.status : updateData.status)
+        'A mentee was updated in the system.\n\n' +
+          'Mentor Worker ID: ' + ((updateData && updateData.mentor) || '\u2014') + '\n' +
+          'Mentor Name: ' + mentorNameFor_(updateData && updateData.mentor) + '\n' +
+          'Mentee Name: ' + (updated ? updated.name : (updateData && updateData.name))
       );
 
     } else if (action === 'deleteMentee') {
       var delId = body.id;
-      deleteMenteeRow_(delId);
+      var deletedMentee = deleteMenteeRow_(delId);
       output = { success: true };
-
+      if (deletedMentee) {
+        sendNotification_(
+          'Mentee deleted',
+          'A mentee was deleted from the system.\n\n' +
+            'Mentor Worker ID: ' + (deletedMentee.mentor || '\u2014') + '\n' +
+            'Mentor Name: ' + mentorNameFor_(deletedMentee.mentor) + '\n' +
+            'Mentee Name: ' + deletedMentee.name
+        );
+      } else {
+        sendNotification_(
+          'Mentee deleted',
+          'A mentee was deleted from the system, but its details could not be retrieved.'
+        );
+      }
     } else if (action === 'addMentor') {
       var newMentor = body.data;
       appendRow_(MENTORS_SHEET, ['workerID', 'name', 'gender', 'password'], newMentor);
@@ -297,17 +311,36 @@ function updateMenteeRow_(data) {
 function deleteMenteeRow_(id) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(MENTEES_SHEET);
-  if (!sheet) return;
+  if (!sheet) return null;
   var range = sheet.getDataRange();
   var values = range.getValues();
   var headers = values[0];
   var idCol = headers.indexOf('id');
   for (var i = 1; i < values.length; i++) {
     if (String(values[i][idCol]) === String(id)) {
-      sheet.deleteRow(i + 1);
-      return;
+      var rowIndex = i + 1;
+      var row = sheet.getRange(rowIndex, 1, 1, headers.length).getValues()[0];
+      var deleted = {};
+      for (var k = 0; k < headers.length; k++) {
+        deleted[headers[k]] = cellValue_(headers[k], row[k]);
+      }
+      sheet.deleteRow(rowIndex);
+      return deleted;
     }
   }
+  return null;
+}
+
+function mentorNameFor_(workerID) {
+  if (!workerID) return '\u2014';
+  var mentors = getMentors_();
+  for (var i = 0; i < mentors.length; i++) {
+    if (String(mentors[i].workerID) === String(workerID)) {
+      return mentors[i].name || String(workerID);
+    }
+  }
+  if (String(workerID) === '1990') return 'Administrator';
+  return String(workerID);
 }
 
 function generateId_() {
