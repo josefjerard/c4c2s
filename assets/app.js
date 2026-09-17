@@ -9,6 +9,7 @@
 
   var _mentees = [];
   var _mentors = [];
+  var _offline = false;
 
   /* ---------- Data layer (Google Sheets via Apps Script) ---------- */
 
@@ -93,16 +94,19 @@
       saveCachedMentees(_mentees);
       return _mentees;
     }).catch(function () {
+      _offline = true;
       return _mentees;
     });
   }
 
   function fetchMentors() {
+    var cached = getCachedMentors();
+    _mentors = cached ? cached.slice() : [];
     return apiRead('getMentors').then(function (data) {
-      _mentors = (Array.isArray(data) ? data : []).map(normalizeMentor);
+      _mentors = mergeMentors(Array.isArray(data) ? data : []);
       return _mentors;
     }).catch(function () {
-      _mentors = [];
+      _offline = true;
       return _mentors;
     });
   }
@@ -319,6 +323,11 @@
 
   function showLoading(el) {
     if (el) el.innerHTML = '<div class="empty-state"><p>Loading...</p></div>';
+  }
+
+  function offlineBannerHTML() {
+    return '<div class="alert alert-warning offline-banner" role="alert" style="margin:0 0 16px;">' +
+      '<strong>Showing saved data.</strong> Could not reach the server, so this may be out of date. Check your connection and refresh to load the latest.</div>';
   }
 
   /* ---------- Dashboard (dashboard.html) ---------- */
@@ -843,6 +852,14 @@
     var searchEl = document.getElementById('mentorSearchInput');
     if (!tableEl) return;
 
+    _offline = false;
+
+    if (!_mentors.length) {
+      var cachedMentors = getCachedMentors();
+      if (cachedMentors) _mentors = cachedMentors.slice();
+    }
+    if (!_mentees.length) _mentees = loadCachedMentees();
+
     var params = new URLSearchParams(window.location.search);
     var gender = params.get('gender') || '';
     var title = genderTitle(gender);
@@ -861,12 +878,21 @@
 
       if (filtered.length === 0) {
         tableEl.innerHTML = '<div class="empty-state"><h3>No ' + esc(title) + ' mentors found</h3><p>' + (query ? 'Try a different search.' : 'No mentors in this category yet.') + '</p></div>';
+        if (_offline) tableEl.innerHTML += offlineBannerHTML();
         bindMentorExpand();
         return;
       }
 
       tableEl.innerHTML = buildMentorGroupHtml(filtered, _mentorsGenderData.mentees);
+      if (_offline) tableEl.innerHTML += offlineBannerHTML();
       bindMentorExpand();
+    }
+
+    function applyData() {
+      _mentorsGenderData.mentors = getMentors().filter(function (mn) { return mn.workerID !== ADMIN_STAFF_ID; });
+      _mentorsGenderData.mentees = getMentees();
+      _mentorsGenderData.gender = gender;
+      drawMentors();
     }
 
     if (searchEl && !_mentorSearchBound) {
@@ -874,14 +900,13 @@
       searchEl.addEventListener('input', drawMentors);
     }
 
-    showLoading(tableEl);
+    if (_mentors.length || _mentees.length) {
+      applyData();
+    } else {
+      showLoading(tableEl);
+    }
 
-    Promise.all([fetchMentors(), fetchMentees()]).then(function () {
-      _mentorsGenderData.mentors = getMentors().filter(function (mn) { return mn.workerID !== ADMIN_STAFF_ID; });
-      _mentorsGenderData.mentees = getMentees();
-      _mentorsGenderData.gender = gender;
-      drawMentors();
-    });
+    Promise.all([fetchMentors(), fetchMentees()]).then(applyData);
   }
 
   function renderAdmin() {
@@ -889,9 +914,15 @@
     var tableEl = document.getElementById('adminGenderContainer');
     if (!statsEl || !tableEl) return;
 
-    showLoading(tableEl);
+    _offline = false;
 
-    Promise.all([fetchMentors(), fetchMentees()]).then(function () {
+    if (!_mentors.length) {
+      var cachedMentors = getCachedMentors();
+      if (cachedMentors) _mentors = cachedMentors.slice();
+    }
+    if (!_mentees.length) _mentees = loadCachedMentees();
+
+    function drawAdmin() {
       var mentors = getMentors().filter(function (mn) { return mn.workerID !== ADMIN_STAFF_ID; });
       var mentees = getMentees();
       var totalMentees = mentees.length;
@@ -900,7 +931,8 @@
       statsEl.innerHTML =
         card('Total Mentors', mentors.length, 'total') +
         card('Total Mentees', totalMentees, 'active') +
-        card('Total Members', totalMembers, 'transferred');
+        card('Total Members', totalMembers, 'transferred') +
+        (_offline ? offlineBannerHTML() : '');
 
       var males = mentors.filter(function (mn) { return String(mn.gender || '').toLowerCase() === 'male'; });
       var females = mentors.filter(function (mn) { return String(mn.gender || '').toLowerCase() === 'female'; });
@@ -912,11 +944,21 @@
           '</a>';
       }
 
-      tableEl.innerHTML = '<section class="stats" style="margin-bottom:0;">' +
+      tableEl.innerHTML =
+        '<section class="stats" style="margin-bottom:0;">' +
         genderCard('GWAPO MENTORS', males.length, 'mentors.html?gender=male', 'gender-male') +
         genderCard('GORGEOUS MENTORS', females.length, 'mentors.html?gender=female', 'gender-female') +
-        '</section>';
-    });
+        '</section>' +
+        (_offline ? offlineBannerHTML() : '');
+    }
+
+    if (_mentors.length || _mentees.length) {
+      drawAdmin();
+    } else {
+      showLoading(tableEl);
+    }
+
+    Promise.all([fetchMentors(), fetchMentees()]).then(drawAdmin);
   }
 
   /* ---------- Email notification settings (admin) ---------- */
@@ -1247,6 +1289,10 @@
     if (!requireAuth()) return;
 
     window.addEventListener('pageshow', function (event) {
+      if (!getSessionUser()) {
+        window.location.replace('login.html');
+        return;
+      }
       if (event.persisted) window.location.reload();
     });
 
