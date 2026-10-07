@@ -961,17 +961,17 @@
       var females = mentors.filter(function (mn) { return String(mn.gender || '').toLowerCase() === 'female'; });
 
       function genderCard(name, count, link, cls) {
-        return '<a href="' + link + '" class="stat-card ' + cls + '" style="display:block;text-decoration:none;color:inherit;">' +
-          '<div class="stat-label">' + esc(name) + '</div>' +
-          '<div class="stat-value">' + count + '</div>' +
+        return '<a href="' + link + '" class="admin-gender-link ' + cls + '">' +
+          '<span class="admin-gender-name">' + esc(name) + '</span>' +
+          '<span class="admin-gender-count">' + count + '</span>' +
           '</a>';
       }
 
       tableEl.innerHTML =
-        '<section class="stats" style="margin-bottom:0;">' +
+        '<div class="admin-gender-links">' +
         genderCard('GWAPO MENTORS', males.length, 'mentors.html?gender=male', 'gender-male') +
         genderCard('GORGEOUS MENTORS', females.length, 'mentors.html?gender=female', 'gender-female') +
-        '</section>' +
+        '</div>' +
         (_offline ? offlineBannerHTML() : '');
     }
 

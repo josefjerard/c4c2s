@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>C2S Admin Dashboard</title>
-  <link rel="stylesheet" href="assets/style.css?v=3">
+  <link rel="stylesheet" href="assets/style.css?v=4">
   <script>
     if (!sessionStorage.getItem('c2s_session')) {
       window.location.replace('login.html');
@@ -38,15 +38,17 @@
       <h1>Admin Overview</h1>
     </div>
 
-    <section class="stats" id="adminStats"></section>
+    <div class="admin-layout">
+      <aside class="admin-sidebar">
+        <h2>Mentor groups</h2>
+        <nav id="adminGenderContainer" aria-label="Mentor groups"></nav>
+      </aside>
 
-    <section class="admin-chart-card" id="memberChart" aria-labelledby="memberChartTitle"></section>
-
-    <div class="page-header" style="margin-top:8px;">
-      <h1 style="font-size:1.2rem;">Mentors List</h1>
+      <div class="admin-main">
+        <section class="stats" id="adminStats"></section>
+        <section class="admin-chart-card" id="memberChart" aria-labelledby="memberChartTitle"></section>
+      </div>
     </div>
-
-    <div class="admin-container" id="adminGenderContainer"></div>
   </main>
 
   <footer class="footer">C2S Admin System &middot; Admin Dashboard</footer>
@@ -54,6 +56,6 @@
   <script>
     window.ADMIN_MODE = true;
   </script>
-  <script src="assets/app.js?v=10"></script>
+  <script src="assets/app.js?v=11"></script>
 </body>
 </html>
