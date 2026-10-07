@@ -13,7 +13,7 @@ GitHub Pages: https://josefjerard.github.io/c4c2s/
 - **Mentor app** (`dashboard.html`) — the per-mentor mentee workspace: dashboard stats, live search, status filter, mentee table (name, status, potential mentor, remarks).
 - **Add / Edit mentee** (`create.html`, `edit.html`) — full mentee form.
 - **Mentee details** (`view.html`) — view-only detail of a mentee (all fields).
-- **Admin dashboard** (`admin.html`) — shows total mentors, total mentees, and total members, plus clickable **GWAPO** (male) and **GORGEOUS** (female) cards that link to the mentor lists.
+- **Admin dashboard** (`admin.html`) — shows total mentors, total mentees, and total members, a pie chart comparing mentors and mentees, plus clickable **GWAPO** (male) and **GORGEOUS** (female) cards that link to the mentor lists.
 - **Mentors by gender** (`mentors.html?gender=male` / `?gender=female`) — lists GWAPO (male) or GORGEOUS (female) mentors; each mentor shows their gender, Worker ID, password, and expandable mentees.
 - **Settings** (`settings.html`) — dark/light mode and account information (edit full name, Worker ID, and password).
 
@@ -73,6 +73,6 @@ C2S/
 - Age computed automatically from birthday
 - Contact number: exactly 11 digits starting with `09`
 - Dashboard stats, live search, status filter
-- Admin dashboard: total mentors, total mentees, total members, plus clickable GWAPO/GORGEOUS cards that open the mentor lists by gender
+- Admin dashboard: total mentors, total mentees, total members, a mentors-versus-mentees pie chart, plus clickable GWAPO/GORGEOUS cards that open the mentor lists by gender
 - Settings: edit own account information (full name, Worker ID, password); changing Worker ID reassigns the mentor's mentees
 - Dark mode / light mode toggle

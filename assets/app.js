@@ -912,6 +912,7 @@
   function renderAdmin() {
     var statsEl = document.getElementById('adminStats');
     var tableEl = document.getElementById('adminGenderContainer');
+    var chartEl = document.getElementById('memberChart');
     if (!statsEl || !tableEl) return;
 
     _offline = false;
@@ -933,6 +934,28 @@
         card('Total Mentees', totalMentees, 'active') +
         card('Total Members', totalMembers, 'transferred') +
         (_offline ? offlineBannerHTML() : '');
+
+      var mentorPercent = totalMembers ? mentors.length / totalMembers * 100 : 0;
+      var menteePercent = totalMembers ? totalMentees / totalMembers * 100 : 0;
+      if (chartEl) {
+        chartEl.innerHTML =
+          '<h2 id="memberChartTitle">Mentors and Mentees</h2>' +
+          '<div class="admin-chart-content">' +
+          '<div class="member-pie-chart' + (totalMembers ? '' : ' empty') + '" role="img" aria-label="' +
+          esc(mentors.length + ' mentors (' + Math.round(mentorPercent) + '%) and ' +
+            totalMentees + ' mentees (' + Math.round(menteePercent) + '%)') +
+          '" style="--mentor-share:' + mentorPercent + '%;">' +
+          '</div>' +
+          '<ul class="member-chart-legend" aria-label="Chart values">' +
+          '<li><span class="member-chart-swatch mentors" aria-hidden="true"></span>' +
+          '<span>Mentors</span><strong>' + mentors.length + '</strong>' +
+          '<span class="member-chart-percent">' + Math.round(mentorPercent) + '%</span></li>' +
+          '<li><span class="member-chart-swatch mentees" aria-hidden="true"></span>' +
+          '<span>Mentees</span><strong>' + totalMentees + '</strong>' +
+          '<span class="member-chart-percent">' + Math.round(menteePercent) + '%</span></li>' +
+          '</ul>' +
+          '</div>';
+      }
 
       var males = mentors.filter(function (mn) { return String(mn.gender || '').toLowerCase() === 'male'; });
       var females = mentors.filter(function (mn) { return String(mn.gender || '').toLowerCase() === 'female'; });
