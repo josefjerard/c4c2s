@@ -359,8 +359,8 @@ a:hover {
   flex: none;
   border-radius: 50%;
   background: conic-gradient(
-    var(--primary) 0 var(--mentor-share),
-    var(--success) var(--mentor-share) 100%
+    #d946ef 0 var(--mentor-share),
+    #facc15 var(--mentor-share) 100%
   );
 }
 
@@ -389,11 +389,11 @@ a:hover {
 }
 
 .member-chart-swatch.mentors {
-  background: var(--primary);
+  background: #d946ef;
 }
 
 .member-chart-swatch.mentees {
-  background: var(--success);
+  background: #facc15;
 }
 
 .member-chart-legend strong {
