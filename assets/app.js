@@ -889,7 +889,7 @@
     }
 
     function applyData() {
-      _mentorsGenderData.mentors = getMentors().filter(function (mn) { return mn.workerID !== ADMIN_STAFF_ID; });
+      _mentorsGenderData.mentors = getMentors().filter(function (mn) { return String(mn.workerID) !== ADMIN_STAFF_ID; });
       _mentorsGenderData.mentees = getMentees();
       _mentorsGenderData.gender = gender;
       drawMentors();
@@ -924,7 +924,7 @@
     if (!_mentees.length) _mentees = loadCachedMentees();
 
     function drawAdmin() {
-      var mentors = getMentors().filter(function (mn) { return mn.workerID !== ADMIN_STAFF_ID; });
+      var mentors = getMentors().filter(function (mn) { return String(mn.workerID) !== ADMIN_STAFF_ID; });
       var mentees = getMentees();
       var totalMentees = mentees.length;
       var totalMembers = mentors.length + totalMentees;
