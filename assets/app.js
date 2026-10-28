@@ -32,18 +32,36 @@
 
   var MENTEES_CACHE_KEY = 'c2s_mentees';
 
+  function filterMenteesForCurrentUser(mentees) {
+    var user = getSessionUser();
+    if (!user || isAdmin(user)) return mentees;
+    var workerID = String(user.workerID || '').trim();
+    return mentees.filter(function (mentee) {
+      return String(mentee.mentor || '').trim() === workerID;
+    });
+  }
+
+  function menteesCacheKey() {
+    var user = getSessionUser();
+    if (!user || isAdmin(user)) return MENTEES_CACHE_KEY;
+    return MENTEES_CACHE_KEY + '_' + encodeURIComponent(String(user.workerID || ''));
+  }
+
   function loadCachedMentees() {
     try {
-      var raw = localStorage.getItem(MENTEES_CACHE_KEY);
+      var raw = localStorage.getItem(menteesCacheKey());
+      if (!raw && menteesCacheKey() !== MENTEES_CACHE_KEY) {
+        raw = localStorage.getItem(MENTEES_CACHE_KEY);
+      }
       var list = raw ? JSON.parse(raw) : null;
-      if (Array.isArray(list)) return list;
+      if (Array.isArray(list)) return filterMenteesForCurrentUser(list);
     } catch (e) {}
     return [];
   }
 
   function saveCachedMentees(list) {
     try {
-      localStorage.setItem(MENTEES_CACHE_KEY, JSON.stringify(list || []));
+      localStorage.setItem(menteesCacheKey(), JSON.stringify(filterMenteesForCurrentUser(list || [])));
     } catch (e) {}
   }
 
@@ -90,7 +108,7 @@
   function fetchMentees() {
     _mentees = loadCachedMentees();
     return apiRead('getMentees').then(function (data) {
-      _mentees = Array.isArray(data) ? data : _mentees;
+      _mentees = Array.isArray(data) ? filterMenteesForCurrentUser(data) : _mentees;
       saveCachedMentees(_mentees);
       return _mentees;
     }).catch(function () {
@@ -586,7 +604,7 @@
     }
 
     apiRead('getMentees').then(function (data) {
-      _mentees = Array.isArray(data) ? data : _mentees;
+      _mentees = Array.isArray(data) ? filterMenteesForCurrentUser(data) : _mentees;
       saveCachedMentees(_mentees);
 
       var m = getMenteeById(id);
@@ -754,11 +772,11 @@
                 if (m.mentor === oldWorkerID) { m.mentor = newWorkerID; }
                 return m;
               });
-              saveCachedMentees(_mentees);
             }
 
             saveCachedMentors(_mentors);
             setSessionUser(updatedMentor, null);
+            if (newWorkerID !== oldWorkerID) saveCachedMentees(_mentees);
 
             if (GAS_URL) {
               apiPost('updateMentor', { data: {

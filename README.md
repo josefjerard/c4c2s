@@ -33,11 +33,12 @@ The spreadsheet has two sheets:
 - **Mentors** — columns: `workerID | name | gender | password`
 - **Mentees** — columns: `id | name | status | contact | birthday | address | cldp1 | cldp2 | cldp3 | module | moduleLesson | potentialMentor | c2s101 | otherTrainings | remarks | mentor | createdAt | updatedAt`
 
-The Apps Script endpoint is configured as `GAS_URL` in `assets/app.js`. Mentors/mentees are also cached in `localStorage` keys so data appears instantly and the app still works offline:
+The Apps Script endpoint is configured as `GAS_URL` in `assets/app.js`. Mentees are assigned to a mentor by the `mentor` column, and each mentor dashboard and local mentee cache is scoped to the signed-in Worker ID. The admin account continues to see all mentees. This also filters older shared-cache data when it is loaded by a mentor. Mentors and mentees are cached in `localStorage` so data appears instantly and the app still works offline:
 
 | Key | Purpose |
 | --- | --- |
-| `c2s_mentees` | All mentees |
+| `c2s_mentees_<workerID>` | Mentees assigned to that mentor |
+| `c2s_mentees` | Admin's all-mentees cache and legacy cache used for migration |
 | `c2s_mentors_cache` | Mentor accounts |
 | `c2s_theme` | Theme preference (light/dark) |
 
